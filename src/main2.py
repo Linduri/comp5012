@@ -7,28 +7,21 @@ import re
 import pandas as pd
 import numpy as np
 import random
+from pymoo.core.problem import Problem
+from pymoo.core.problem import ElementwiseProblem
+
+from pymoo.algorithms.moo.nsga2 import NSGA2
+from pymoo.optimize import minimize
+from pymoo.visualization.scatter import Scatter
+from pymoo.core.callback import Callback
+
+import matplotlib.pyplot as plt
 
 # ====================================================== LOAD DATA
 
-FILE_IDX = 1
+FILE_IDX = 10
 filepath = f"{pathlib.Path(__file__).parent.parent.absolute()}/data/airland{FILE_IDX}.txt"
 print(filepath)
-
-# class Cols:
-#     T_APPEAR = 0
-#     T_LAND_EARLY = 1
-#     T_LAND_TARGET = 2
-#     T_LAND_ASSIGNED = 3
-#     T_LAND_LATE = 4
-#     P_LAND_EARLY = 5
-#     P_LAND_LATE = 6
-#     lst = []
-
-#     def __init__(self):
-#         self.lst = [self.T_APPEAR, self.T_LAND_EARLY, self.T_LAND_TARGET, self.T_LAND_ASSIGNED, self.T_LAND_LATE, self.P_LAND_EARLY, self.P_LAND_LATE]
-
-#     def __getitem__(self, key):
-#         return self.lst[key]
 
 COLS = {
     "T_APPEAR": 0,
@@ -40,6 +33,8 @@ COLS = {
     "P_LAND_LATE": 6
 }
 
+N_OBJECTIVES = 2
+N_CONSTRAINTS = 0
 
 def split_terms(line):
     """
@@ -108,4 +103,50 @@ data[:, COLS["T_LAND_ASSIGNED"]] = np.round(random.uniform(
 columns = ["t_appear", "t_land_early", "t_land_target", "t_land_assigned",
            "t_land_late", "p_land_early", "p_land_late"] + [f"sep_{i}" for i in range(n_planes)]
 df = pd.DataFrame(data=data, columns=columns)
-print(df)
+# print(df)
+
+#Get upper and lower bounds for data
+xl = data.min(axis=0)
+xu = data.max(axis=0)
+
+class PlaneProblem(ElementwiseProblem):
+    def __init__(self, xl, xu):
+        super().__init__(n_var=var_per_plane, n_obj=N_OBJECTIVES, n_ieq_constr=N_CONSTRAINTS, xl=xl, xu=xu)
+
+    def _evaluate(self, x, out, *args, **kwargs):
+        t_delta = x[COLS["T_LAND_TARGET"]] - x[COLS["T_LAND_ASSIGNED"]]
+        early_score = t_delta*x[COLS["P_LAND_EARLY"]] if t_delta > 0 else 0
+        late_score = abs(t_delta)*x[COLS["P_LAND_LATE"]] if t_delta < 0 else 0
+        
+        out["F"] = [early_score, late_score]
+        # out["G"] =
+
+class ArchiveCallback(Callback):
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.n_evals = []
+        self.opt = []
+
+    def notify(self, algorithm):
+        self.n_evals.append(algorithm.evaluator.n_eval)
+        self.opt.append(algorithm.opt[0].F)
+
+algorithm = NSGA2(pop_size=n_planes)
+callback = ArchiveCallback()
+res = minimize(PlaneProblem(xl, xu),
+               algorithm,
+               callback=callback,
+               termination=('n_gen', 200),
+               seed=1,
+               verbose=False)
+
+plot = Scatter()
+# plot.add(problem.pareto_front(), plot_type="line", color="black", alpha=0.7)
+plot.add(res.F, facecolor="none", edgecolor="red")
+plot.show()
+
+plt.title("Convergence")
+plt.plot(callback.n_evals, callback.opt, "--")
+plt.yscale("log")
+plt.show()
