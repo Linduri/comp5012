@@ -3,6 +3,7 @@ Schedules planes based on set criteria
 """
 
 import pathlib
+import pandas as pd
 
 #====================================================== LOAD DATA
 
@@ -12,3 +13,6 @@ print(filepath)
 
 with open(filepath, 'r', encoding="utf-8") as file:
     data = file.read()
+
+#===================================================== PARSE DATA
+

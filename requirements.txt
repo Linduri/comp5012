@@ -2,3 +2,4 @@ pymoo
 urllib3
 matplotlib
 numpy
+pandas
