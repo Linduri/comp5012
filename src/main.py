@@ -80,13 +80,12 @@ n_planes, t_freeze, data, lower_bounds, upper_bounds = load_data(filepath)
 # ========================================== INITIALISE POPULATION
 
 print("Initialise population")
-populations = init_population(data, 3)
+schedules = init_population(data, 3)
 
 # for pop in populations:
 #     draw_planes(pop)
 
-# ==================================================== TRAIN MODEL
-
+# ============================================= DEFINE THE PROBLEM
 class PlaneProblem(ElementwiseProblem):
     """
     Defines the plane problem
@@ -110,28 +109,40 @@ class PlaneProblem(ElementwiseProblem):
         out["F"] = [early_score, late_score]
         # out["G"] =
 
-# problem = PlaneProblem(lower_bounds, upper_bounds)
-# for pop in populations:
+plane_problem = PlaneProblem(lower_bounds, upper_bounds)
+# for schedule in schedules:
 #     res = []
 #     problem._evaluate(pop, res)
     # print(problem._evaluate(pop, res))
 
-# class PlaneMutation(Mutation):
-#     """
-#     Mutates each schedule
-#     """
-#     def __init__(self, prob=1.0):
-#         super().__init__()
-#         self.prob = prob
+# ============================================ DEFINE THE MUTATION
+class PlaneMutation(Mutation):
+    """
+    Mutates each schedule
+    """
+    def __init__(self, prob=1.0):
+        super().__init__()
+        self.prob = prob
 
-#     def _do(self, problem, X, **kwargs):
-#         Y = X.copy()
-#         for i, y in enumerate(X):
-#             if np.random.random() < self.prob:
-#                 Y[i, COLS["T_LAND_ASSIGNED"]] = np.random.uniform(
-#                     y[COLS["T_LAND_EARLY"]], y[COLS["T_LAND_LATE"]])
+    def _do(self, problem, X, **kwargs):
+        _schedule = X.copy()
 
-#         return Y
+        for plane in _schedule:
+            if np.random.random() < self.prob:
+                plane[COLS["T_LAND_ASSIGNED"]] = np.random.uniform(
+                    plane[COLS["T_LAND_EARLY"]], plane[COLS["T_LAND_LATE"]])
+
+        return _schedule
+    
+plane_mutation = PlaneMutation()
+
+# for idx, schedule in enumerate(schedules):
+#     print(f"Schedule {idx} before mutation")
+#     draw_planes(schedule)
+
+#     print(f"Schedule {idx} after mutation")
+#     draw_planes(plane_mutation._do(plane_problem, schedule))
+    
 
 # class ArchiveCallback(Callback):
 #     """
