@@ -2,11 +2,13 @@
 Schedules planes based on set criteria
 """
 import pathlib
+import numpy as np
 import matplotlib.pyplot as plt
 
 from pymoo.core.problem import ElementwiseProblem
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.optimize import minimize
+from pymoo.core.mutation import Mutation
 from pymoo.termination import get_termination
 from pymoo.core.callback import Callback
 from PIL import Image, ImageDraw
@@ -104,6 +106,20 @@ class PlaneProblem(ElementwiseProblem):
         # out["G"] =
 
 
+class PlaneMutation(Mutation):
+    def __init__(self, prob=1.0):
+        super().__init__()
+        self.prob = prob
+
+    def _do(self, problem, X, **kwargs):
+        Y = X.copy()
+        for i, y in enumerate(X):
+            if np.random.random() < self.prob:
+                Y[i, COLS["T_LAND_ASSIGNED"]] = np.random.uniform(
+                    y[COLS["T_LAND_EARLY"]], y[COLS["T_LAND_LATE"]])
+
+        return Y
+
 class ArchiveCallback(Callback):
     """
     Record the history of the network evolution.
@@ -124,11 +140,13 @@ class ArchiveCallback(Callback):
 
 
 problem = PlaneProblem(data.shape[1], lower_bounds, upper_bounds)
+mutation = PlaneMutation()
 
 plane_algorithm = NSGA2(
     pop_size=n_planes,
     n_offsprings=10,
     sampling=data,
+    mutation = mutation
 )
 
 termination = get_termination("n_gen", 40)
@@ -146,7 +164,7 @@ res = minimize(problem,
 combined_early_and_late = [[-x[0]+x[1] for x in X]
                            for X in res.algorithm.callback.data["penalties"]]
 combined_early_and_late_df = pd.DataFrame(data=combined_early_and_late, columns=[
-                    f"plane_{i}" for i in range(len(combined_early_and_late[0]))])
+    f"plane_{i}" for i in range(len(combined_early_and_late[0]))])
 
 print("Penalty evolution")
 plt.plot(combined_early_and_late_df)
