@@ -1,21 +1,18 @@
 """
 Schedules planes based on set criteria
 """
+import pathlib
+import matplotlib.pyplot as plt
 
 from pymoo.core.problem import ElementwiseProblem
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.optimize import minimize
-from pymoo.visualization.scatter import Scatter
 from pymoo.termination import get_termination
 from pymoo.core.callback import Callback
-from data_loader import load_data, COLS
 from PIL import Image, ImageDraw
-
-import numpy as np
 import pandas as pd
-import pathlib
-import matplotlib.pyplot as plt
 
+from data_loader import load_data, COLS
 
 # ====================================================== LOAD DATA
 
@@ -25,6 +22,8 @@ filepath = f"{pathlib.Path(__file__).parent.parent.absolute()}/data/airland{FILE
 n_planes, t_freeze, data, lower_bounds, upper_bounds = load_data(filepath)
 
 # ================================================== DRAW SCHEDULE
+
+
 def draw_planes(planes, pixel_height=20, gap_height=3):
     """
     Draw plane event times for easier analysis of the data.
@@ -79,9 +78,11 @@ def draw_planes(planes, pixel_height=20, gap_height=3):
     image.show()
     # im.save('simplePixel.png') # or any image format
 
+
 # ==================================================== TRAIN MODEL
 print("Start population")
 draw_planes(data)
+
 
 class PlaneProblem(ElementwiseProblem):
     """
@@ -107,6 +108,7 @@ class ArchiveCallback(Callback):
     """
     Record the history of the network evolution.
     """
+
     def __init__(self) -> None:
         super().__init__()
         self.n_evals = []
@@ -141,8 +143,10 @@ res = minimize(problem,
 
 # =================================================== SHOW RESULTS
 # ======================================= SHOW PENATLY PROGRESSION
-combined_early_and_late = [[-x[0]+x[1] for x in X] for X in res.algorithm.callback.data["penalties"]]
-combined_early_and_late_df = pd.DataFrame(data=combined_early_and_late, columns=[f"plane_{i}" for i in range(len(combined_early_and_late[0]))])
+combined_early_and_late = [[-x[0]+x[1] for x in X]
+                           for X in res.algorithm.callback.data["penalties"]]
+combined_early_and_late_df = pd.DataFrame(data=combined_early_and_late, columns=[
+                    f"plane_{i}" for i in range(len(combined_early_and_late[0]))])
 
 print("Penalty evolution")
 plt.plot(combined_early_and_late_df)
