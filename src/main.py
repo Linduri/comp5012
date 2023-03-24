@@ -21,19 +21,35 @@ from PIL import Image, ImageColor
 FILE_IDX = 1
 filepath = f"{pathlib.Path(__file__).parent.parent.absolute()}/data/airland{FILE_IDX}.txt"
 
-n_planes, t_freeze, df, lower_bounds, upper_bounds = load_data(filepath)
-print(df)
+n_planes, t_freeze, data, lower_bounds, upper_bounds = load_data(filepath)
+print(data)
 
 # ================================================== DRAW SCHEDULE
-def draw_pop(population):
+def draw_planes(planes, pixel_height=10, gap_height=3):
+    _lower_bounds = planes.min(axis=0)
+    _upper_bounds = planes.max(axis=0)
+    width = int(_upper_bounds[COLS["T_LAND_EARLY"]] + _upper_bounds[COLS["T_LAND_LATE"]] - _lower_bounds[COLS["T_LAND_EARLY"]])
+    row_height = pixel_height+gap_height
+    image = Image.new('RGB', (width, planes.shape[0]*row_height))    
 
+    for idx, plane in enumerate(planes):
+        land_window = int(plane[COLS["T_LAND_LATE"]] - plane[COLS["T_LAND_EARLY"]])
+        for i in range(land_window):
+            for j in range(pixel_height): 
+                image.putpixel((int(plane[COLS["T_LAND_EARLY"]]) + i - 1, (idx*row_height)+j), ImageColor.getrgb('red'))
 
-im = Image.new('1', (1,1)) # create the Image of size 1 pixel 
-im.putpixel((0,0), ImageColor.getcolor('black', '1')) # or whatever color you wish
+        for j in range(pixel_height):
+            image.putpixel((int(plane[COLS["T_LAND_ASSIGNED"]])-1, (idx*row_height)+j), ImageColor.getrgb('white'))
 
-im.save('simplePixel.png') # or any image format
+        for j in range(pixel_height):
+            image.putpixel((int(plane[COLS["T_APPEAR"]])-1, (idx*row_height)+j), (128,212,255))
+
+    image.show()
+    # im.save('simplePixel.png') # or any image format
 
 # ==================================================== TRAIN MODEL
+
+draw_planes(data)
 
 N_OBJECTIVES = 2
 N_CONSTRAINTS = 0
@@ -69,7 +85,7 @@ class ArchiveCallback(Callback):
 
 
 
-problem = PlaneProblem(df.shape[1], lower_bounds, upper_bounds)
+problem = PlaneProblem(data.shape[1], lower_bounds, upper_bounds)
 
 # algorithm = NSGA2(pop_size=n_planes)
 # callback = ArchiveCallback()

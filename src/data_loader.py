@@ -17,12 +17,14 @@ COLS = {
     "P_LAND_LATE": 6
 }
 
+
 def split_terms(line):
     """
     Split a line of numbers into a list of floats
     """
     nums = re.split(r"\s+", line.strip())
     return [float(num) for num in nums]
+
 
 def load_data(path):
     """
@@ -81,16 +83,15 @@ def load_data(path):
                     plane_idx += 1
                     term_idx = 0
 
-    data[:, COLS["T_LAND_ASSIGNED"]] = np.round(random.uniform(
-        data[:, COLS["T_LAND_EARLY"]], data[:, COLS["T_LAND_LATE"]]))
+    data[:, COLS["T_LAND_ASSIGNED"]] = np.random.randint(
+        data[:, COLS["T_LAND_EARLY"]], data[:, COLS["T_LAND_LATE"]], data.shape[0])
 
-    columns = ["t_appear", "t_land_early", "t_land_target", "t_land_assigned",
-            "t_land_late", "p_land_early", "p_land_late"] + [f"sep_{i}" for i in range(n_planes)]
-    
+    # columns = ["t_appear", "t_land_early", "t_land_target", "t_land_assigned",
+    #          "t_land_late", "p_land_early", "p_land_late"] + [f"sep_{i}" for i in range(n_planes)]
     # data_out = pd.DataFrame(data=data, columns=columns)
     # print(df)
 
-    #Get upper and lower bounds for data
+    # Get upper and lower bounds for data
     lower_bounds = data.min(axis=0)
     upper_bounds = data.max(axis=0)
 
