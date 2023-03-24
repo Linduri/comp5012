@@ -79,7 +79,7 @@ n_planes, t_freeze, data, lower_bounds, upper_bounds = load_data(filepath)
 
 # ========================================== INITIALISE POPULATION
 
-print("Initialise population")
+print("Initialising population...")
 schedules = init_population(data, 3)
 
 # for pop in populations:
@@ -109,6 +109,7 @@ class PlaneProblem(ElementwiseProblem):
         out["F"] = [early_score, late_score]
         # out["G"] =
 
+print("Initialising problem...")
 plane_problem = PlaneProblem(lower_bounds, upper_bounds)
 # for schedule in schedules:
 #     res = []
@@ -134,6 +135,7 @@ class PlaneMutation(Mutation):
 
         return _schedule
     
+print("Initialising problem...")
 plane_mutation = PlaneMutation()
 
 # for idx, schedule in enumerate(schedules):
@@ -143,45 +145,49 @@ plane_mutation = PlaneMutation()
 #     print(f"Schedule {idx} after mutation")
 #     draw_planes(plane_mutation._do(plane_problem, schedule))
     
+# =================================== DEFINE THE ARCHIVE MECHANISM
+class ArchiveCallback(Callback):
+    """
+    Record the history of the network evolution.
+    """
 
-# class ArchiveCallback(Callback):
-#     """
-#     Record the history of the network evolution.
-#     """
+    def __init__(self) -> None:
+        super().__init__()
+        self.n_evals = []
+        self.opt = []
+        self.data["penalties"] = []
+        self.data["population"] = []
 
-#     def __init__(self) -> None:
-#         super().__init__()
-#         self.n_evals = []
-#         self.opt = []
-#         self.data["penalties"] = []
-#         self.data["population"] = []
+    def notify(self, algorithm):
+        self.n_evals.append(algorithm.evaluator.n_eval)
+        self.opt.append(algorithm.opt[0].F)
+        self.data["penalties"].append(algorithm.pop.get("F"))
+        self.data["population"].append(algorithm.pop.get("x"))
 
-#     def notify(self, algorithm):
-#         self.n_evals.append(algorithm.evaluator.n_eval)
-#         self.opt.append(algorithm.opt[0].F)
-#         self.data["penalties"].append(algorithm.pop.get("F"))
-#         self.data["population"].append(algorithm.pop.get("x"))
+print("Initialising archive...")
+plane_callback = ArchiveCallback()
 
+# =============================================== DEFINE THE MODEL
+print("Initialising algorithm...")
+plane_algorithm = NSGA2(
+    pop_size=n_planes,
+    n_offsprings=10,
+    sampling=schedules,
+    mutation = plane_mutation
+)
 
-# plane_problem = PlaneProblem(lower_bounds, upper_bounds)
-# mutation = PlaneMutation()
+# =================================== DEFINE TERMINATION CONDITION
+print("Initialising termination...")
+plane_termination = get_termination("n_gen", 40)
 
-# plane_algorithm = NSGA2(
-#     pop_size=n_planes,
-#     n_offsprings=10,
-#     sampling=populations,
-#     mutation = mutation
-# )
-
-# termination = get_termination("n_gen", 40)
-
-# res = minimize(plane_problem,
-#                plane_algorithm,
-#                termination,
-#                seed=1,
-#                save_history=True,
-#                verbose=False,
-#                callback=ArchiveCallback())
+# ====================================================== RUN MODEL
+res = minimize(problem=plane_problem,
+               algorithm=plane_algorithm,
+               termination=plane_termination,
+               seed=1,
+               save_history=True,
+               verbose=False,
+               callback=plane_callback)
 
 # # =================================================== SHOW RESULTS
 # # ======================================= SHOW PENATLY PROGRESSION
