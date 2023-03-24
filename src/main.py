@@ -3,77 +3,73 @@ Schedules planes based on set criteria
 """
 
 import pathlib
-import re
-import pandas as pd
+
+from pymoo.core.problem import ElementwiseProblem
+
+from pymoo.algorithms.moo.nsga2 import NSGA2
+from pymoo.optimize import minimize
+from pymoo.visualization.scatter import Scatter
+from pymoo.core.callback import Callback
+
+import matplotlib.pyplot as plt
+
+from data_loader import load_data
 
 # ====================================================== LOAD DATA
 
 FILE_IDX = 1
 filepath = f"{pathlib.Path(__file__).parent.parent.absolute()}/data/airland{FILE_IDX}.txt"
-print(filepath)
 
-with open(filepath, 'r', encoding="utf-8") as file:
-    txt_data = file.read()
+n_planes, t_freeze, df, xl, xu = load_data(filepath)
+print(df)
 
-# ===================================================== PARSE DATA
+# ==================================================== TRAIN MODEL
 
-class ParseStage:
-    METAINFO = 1
-    PLANE_ATTRIBUTES = 2
-    PLANE_SEPARATION = 3
-
-parse_stage = ParseStage.METAINFO
-
-metainfo_count = 0
-plane_attributes_count = 0
-plane_separation_count = 0
+N_OBJECTIVES = 2
+N_CONSTRAINTS = 0
 
 
 
-for line in txt_data.splitlines():
-    if not line == '':
-        terms = re.split('\s+', line.strip())
-        terms = [float(term) for term in terms]
+# class PlaneProblem(ElementwiseProblem):
+#     def __init__(self, xl, xu):
+#         super().__init__(n_var=var_per_plane, n_obj=N_OBJECTIVES, n_ieq_constr=N_CONSTRAINTS, xl=xl, xu=xu)
 
-        for term in terms:
-            # print(term)
-            if parse_stage == ParseStage.METAINFO:
-                if metainfo_count == 0:
-                    planes.plane_count = term
-                    metainfo_count += 1
-                else:
-                    planes.freeze_time = term
-                    parse_stage = ParseStage.PLANE_ATTRIBUTES
+#     def _evaluate(self, x, out, *args, **kwargs):
+#         t_delta = x[COLS["T_LAND_TARGET"]] - x[COLS["T_LAND_ASSIGNED"]]
+#         early_score = t_delta*x[COLS["P_LAND_EARLY"]] if t_delta > 0 else 0
+#         late_score = abs(t_delta)*x[COLS["P_LAND_LATE"]] if t_delta < 0 else 0
+        
+#         out["F"] = [early_score, late_score]
+#         # out["G"] =
 
-            elif parse_stage == ParseStage.PLANE_ATTRIBUTES:
-                if plane_attributes_count == 0:
-                    # print("PLANE ATTRIBUTES")
-                    plane = Plane()
-                    plane.attributes.appearance_time = term
-                elif plane_attributes_count == 1:
-                    plane.attributes.earliest_landing_time = term
-                elif plane_attributes_count == 2:
-                    plane.attributes.target_landing_time = term
-                elif plane_attributes_count == 3:
-                    plane.attributes.latest_landing_time = term
-                elif plane_attributes_count == 4:
-                    plane.attributes.early_landing_penalty = term
-                elif plane_attributes_count == 5:
-                    plane.attributes.late_landing_penalty = term
-                    plane_attributes_count = -1  # Minus one to account for increment
-                    parse_stageparse_stage = ParseStage.PLANE_SEPARATION
-                    # print("PLANE SERPARTION")
+# class ArchiveCallback(Callback):
 
-                plane_attributes_count += 1
+#     def __init__(self) -> None:
+#         super().__init__()
+#         self.n_evals = []
+#         self.opt = []
 
-            elif parse_stage == ParseStage.PLANE_SEPARATION:
-                plane.separation_times.append(term)
-                plane_separation_count += 1
+#     def notify(self, algorithm):
+#         self.n_evals.append(algorithm.evaluator.n_eval)
+#         self.opt.append(algorithm.opt[0].F)
 
-                if plane_separation_count == planes.plane_count:
-                    planes.add_plane(plane)
-                    plane_separation_count = 0
-                    parse_stage = ParseStage.PLANE_ATTRIBUTES
 
-            else:
-                print("Invalid stage!")
+
+# algorithm = NSGA2(pop_size=n_planes)
+# callback = ArchiveCallback()
+# res = minimize(PlaneProblem(xl, xu),
+#                algorithm,
+#                callback=callback,
+#                termination=('n_gen', 200),
+#                seed=1,
+#                verbose=False)
+
+# plot = Scatter()
+# # plot.add(problem.pareto_front(), plot_type="line", color="black", alpha=0.7)
+# plot.add(res.F, facecolor="none", edgecolor="red")
+# plot.show()
+
+# plt.title("Convergence")
+# plt.plot(callback.n_evals, callback.opt, "--")
+# plt.yscale("log")
+# plt.show()
