@@ -14,18 +14,8 @@ from pymoo.core.callback import Callback
 from PIL import Image, ImageDraw
 import pandas as pd
 
-from data_loader import load_data, COLS
-
-# ====================================================== LOAD DATA
-
-FILE_IDX = 1
-filepath = f"{pathlib.Path(__file__).parent.parent.absolute()}/data/airland{FILE_IDX}.txt"
-
-n_planes, t_freeze, data, lower_bounds, upper_bounds = load_data(filepath)
-
+from data_loader import load_data, init_population, COLS
 # ================================================== DRAW SCHEDULE
-
-
 def draw_planes(planes, pixel_height=20, gap_height=3):
     """
     Draw plane event times for easier analysis of the data.
@@ -80,98 +70,121 @@ def draw_planes(planes, pixel_height=20, gap_height=3):
     image.show()
     # im.save('simplePixel.png') # or any image format
 
+# ====================================================== LOAD DATA
+
+FILE_IDX = 1
+filepath = f"{pathlib.Path(__file__).parent.parent.absolute()}/data/airland{FILE_IDX}.txt"
+
+n_planes, t_freeze, data, lower_bounds, upper_bounds = load_data(filepath)
+
+# ========================================== INITIALISE POPULATION
+
+print("Initialise population")
+populations = init_population(data, 3)
+
+# for pop in populations:
+#     draw_planes(pop)
 
 # ==================================================== TRAIN MODEL
-print("Start population")
-draw_planes(data)
-
 
 class PlaneProblem(ElementwiseProblem):
     """
     Defines the plane problem
     """
 
-    def __init__(self, n_vars, xl, xu):
-        super().__init__(n_var=n_vars, n_obj=2, n_ieq_constr=0, xl=xl, xu=xu)
+    def __init__(self, xl, xu):
+        super().__init__(n_var=1, n_obj=2, n_ieq_constr=0, xl=xl, xu=xu)
 
     def _evaluate(self, x, out, *args, **kwargs):
         """
         Evaluates how good each population member is
         """
-        t_delta = x[COLS["T_LAND_TARGET"]] - x[COLS["T_LAND_ASSIGNED"]]
-        early_score = t_delta*x[COLS["P_LAND_EARLY"]] if t_delta > 0 else 0
-        late_score = abs(t_delta)*x[COLS["P_LAND_LATE"]] if t_delta < 0 else 0
+        # print(x)
+        t_delta = x[:,COLS["T_LAND_ASSIGNED"]]- x[:,COLS["T_LAND_TARGET"]]
+        early_score = np.sum(np.where(t_delta < 0, t_delta*x[:,COLS["P_LAND_EARLY"]], 0))
+        late_score = np.sum(np.where(t_delta > 0, t_delta*x[:,COLS["P_LAND_LATE"]], 0))
+
+        print(early_score)
+        print(late_score)
 
         out["F"] = [early_score, late_score]
         # out["G"] =
 
+# problem = PlaneProblem(lower_bounds, upper_bounds)
+# for pop in populations:
+#     res = []
+#     problem._evaluate(pop, res)
+    # print(problem._evaluate(pop, res))
 
-class PlaneMutation(Mutation):
-    def __init__(self, prob=1.0):
-        super().__init__()
-        self.prob = prob
+# class PlaneMutation(Mutation):
+#     """
+#     Mutates each schedule
+#     """
+#     def __init__(self, prob=1.0):
+#         super().__init__()
+#         self.prob = prob
 
-    def _do(self, problem, X, **kwargs):
-        Y = X.copy()
-        for i, y in enumerate(X):
-            if np.random.random() < self.prob:
-                Y[i, COLS["T_LAND_ASSIGNED"]] = np.random.uniform(
-                    y[COLS["T_LAND_EARLY"]], y[COLS["T_LAND_LATE"]])
+#     def _do(self, problem, X, **kwargs):
+#         Y = X.copy()
+#         for i, y in enumerate(X):
+#             if np.random.random() < self.prob:
+#                 Y[i, COLS["T_LAND_ASSIGNED"]] = np.random.uniform(
+#                     y[COLS["T_LAND_EARLY"]], y[COLS["T_LAND_LATE"]])
 
-        return Y
+#         return Y
 
-class ArchiveCallback(Callback):
-    """
-    Record the history of the network evolution.
-    """
+# class ArchiveCallback(Callback):
+#     """
+#     Record the history of the network evolution.
+#     """
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.n_evals = []
-        self.opt = []
-        self.data["penalties"] = []
-        self.data["population"] = []
+#     def __init__(self) -> None:
+#         super().__init__()
+#         self.n_evals = []
+#         self.opt = []
+#         self.data["penalties"] = []
+#         self.data["population"] = []
 
-    def notify(self, algorithm):
-        self.n_evals.append(algorithm.evaluator.n_eval)
-        self.opt.append(algorithm.opt[0].F)
-        self.data["penalties"].append(algorithm.pop.get("F"))
-        self.data["population"].append(algorithm.pop.get("x"))
+#     def notify(self, algorithm):
+#         self.n_evals.append(algorithm.evaluator.n_eval)
+#         self.opt.append(algorithm.opt[0].F)
+#         self.data["penalties"].append(algorithm.pop.get("F"))
+#         self.data["population"].append(algorithm.pop.get("x"))
 
 
-problem = PlaneProblem(data.shape[1], lower_bounds, upper_bounds)
-mutation = PlaneMutation()
+# plane_problem = PlaneProblem(lower_bounds, upper_bounds)
+# mutation = PlaneMutation()
 
-plane_algorithm = NSGA2(
-    pop_size=n_planes,
-    n_offsprings=10,
-    sampling=data,
-    mutation = mutation
-)
+# plane_algorithm = NSGA2(
+#     pop_size=n_planes,
+#     n_offsprings=10,
+#     sampling=populations,
+#     mutation = mutation
+# )
 
-termination = get_termination("n_gen", 40)
+# termination = get_termination("n_gen", 40)
 
-res = minimize(problem,
-               plane_algorithm,
-               termination,
-               seed=1,
-               save_history=True,
-               verbose=False,
-               callback=ArchiveCallback())
+# res = minimize(plane_problem,
+#                plane_algorithm,
+#                termination,
+#                seed=1,
+#                save_history=True,
+#                verbose=False,
+#                callback=ArchiveCallback())
 
-# =================================================== SHOW RESULTS
-# ======================================= SHOW PENATLY PROGRESSION
-combined_early_and_late = [[-x[0]+x[1] for x in X]
-                           for X in res.algorithm.callback.data["penalties"]]
-combined_early_and_late_df = pd.DataFrame(data=combined_early_and_late, columns=[
-    f"plane_{i}" for i in range(len(combined_early_and_late[0]))])
+# # =================================================== SHOW RESULTS
+# # ======================================= SHOW PENATLY PROGRESSION
+# combined_early_and_late = [[-x[0]+x[1] for x in X]
+#                            for X in res.algorithm.callback.data["penalties"]]
+# combined_early_and_late_df = pd.DataFrame(data=combined_early_and_late, columns=[
+#     f"plane_{i}" for i in range(len(combined_early_and_late[0]))])
 
-print("Penalty evolution")
-plt.plot(combined_early_and_late_df)
-plt.xlabel("Generation")
-plt.ylabel("Penalty (Negative is early, positive is late)")
-plt.show()
+# print("Penalty evolution")
+# plt.plot(combined_early_and_late_df)
+# plt.xlabel("Generation")
+# plt.ylabel("Penalty (Negative is early, positive is late)")
+# plt.show()
 
-# ==================================== SHOW POPULATION PROGRESSION
-print("End population")
-draw_planes(res.algorithm.callback.data["population"][-1])
+# # ==================================== SHOW POPULATION PROGRESSION
+# print("End population")
+# draw_planes(res.algorithm.callback.data["population"][-1])

@@ -81,9 +81,6 @@ def load_data(path):
                     plane_idx += 1
                     term_idx = 0
 
-    data[:, COLS["T_LAND_ASSIGNED"]] = np.random.randint(
-        data[:, COLS["T_LAND_EARLY"]], data[:, COLS["T_LAND_LATE"]], data.shape[0])
-
     # columns = ["t_appear", "t_land_early", "t_land_target", "t_land_assigned",
     #          "t_land_late", "p_land_early", "p_land_late"] + [f"sep_{i}" for i in range(n_planes)]
     # data_out = pd.DataFrame(data=data, columns=columns)
@@ -94,3 +91,20 @@ def load_data(path):
     upper_bounds = data.max(axis=0)
 
     return n_planes, t_freeze, data, lower_bounds, upper_bounds
+
+
+def init_population(base_population, n_members=50):
+    """
+    Generate a randomly initialised starting population.
+    """
+    populations = []
+
+    for _ in range(n_members):
+        new_population = base_population.copy()
+        new_population[:, COLS["T_LAND_ASSIGNED"]] = np.random.randint(
+            new_population[:, COLS["T_LAND_EARLY"]],
+            new_population[:, COLS["T_LAND_LATE"]],
+            new_population.shape[0])
+        populations.append(new_population)
+
+    return np.array(populations)
