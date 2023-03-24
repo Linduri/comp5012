@@ -1,7 +1,11 @@
+"""
+Load and parse plane data from a .txt file to a pandas dataframe with additional metrics.
+"""
+
 import random
+import re
 import numpy as np
 import pandas as pd
-import re
 
 COLS = {
     "T_APPEAR": 0,
@@ -17,10 +21,13 @@ def split_terms(line):
     """
     Split a line of numbers into a list of floats
     """
-    nums = re.split('\s+', line.strip())
+    nums = re.split(r"\s+", line.strip())
     return [float(num) for num in nums]
 
 def load_data(path):
+    """
+    Load and parse plane data from a .txt file to a pandas dataframe with additional metrics.
+    """
     with open(path, 'r', encoding="utf-8") as file:
 
         # Get the plane count and freeze time from the first line.
@@ -30,8 +37,8 @@ def load_data(path):
 
         n_planes = int(terms[0])
         t_freeze = terms[1]
-        print(f"Plane count: {n_planes}")
-        print(f"Freeze time: {t_freeze}")
+        # print(f"Plane count: {n_planes}")
+        # print(f"Freeze time: {t_freeze}")
 
         # Keep reading all remaining terms in groups of 6 + n_planes
         # columns = plane attributes + n_planes separation
@@ -79,11 +86,11 @@ def load_data(path):
 
     columns = ["t_appear", "t_land_early", "t_land_target", "t_land_assigned",
             "t_land_late", "p_land_early", "p_land_late"] + [f"sep_{i}" for i in range(n_planes)]
-    df = pd.DataFrame(data=data, columns=columns)
+    data_out = pd.DataFrame(data=data, columns=columns)
     # print(df)
 
     #Get upper and lower bounds for data
-    xl = data.min(axis=0)
-    xu = data.max(axis=0)
+    lower_bounds = data.min(axis=0)
+    upper_bounds = data.max(axis=0)
 
-    return n_planes, t_freeze, df, xl, xu
+    return n_planes, t_freeze, data_out, lower_bounds, upper_bounds

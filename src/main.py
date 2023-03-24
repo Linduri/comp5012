@@ -13,34 +13,37 @@ from pymoo.core.callback import Callback
 
 import matplotlib.pyplot as plt
 
-from data_loader import load_data
+from data_loader import load_data, COLS
 
 # ====================================================== LOAD DATA
 
 FILE_IDX = 1
 filepath = f"{pathlib.Path(__file__).parent.parent.absolute()}/data/airland{FILE_IDX}.txt"
 
-n_planes, t_freeze, df, xl, xu = load_data(filepath)
+n_planes, t_freeze, df, lower_bounds, upper_bounds = load_data(filepath)
 print(df)
-
 # ==================================================== TRAIN MODEL
 
 N_OBJECTIVES = 2
 N_CONSTRAINTS = 0
 
+class PlaneProblem(ElementwiseProblem):
+    """
+    Defines the plane problem
+    """
+    def __init__(self, n_vars, xl, xu):
+        super().__init__(n_var=n_vars, n_obj=2, n_ieq_constr=N_CONSTRAINTS, xl=xl, xu=xu)
 
-
-# class PlaneProblem(ElementwiseProblem):
-#     def __init__(self, xl, xu):
-#         super().__init__(n_var=var_per_plane, n_obj=N_OBJECTIVES, n_ieq_constr=N_CONSTRAINTS, xl=xl, xu=xu)
-
-#     def _evaluate(self, x, out, *args, **kwargs):
-#         t_delta = x[COLS["T_LAND_TARGET"]] - x[COLS["T_LAND_ASSIGNED"]]
-#         early_score = t_delta*x[COLS["P_LAND_EARLY"]] if t_delta > 0 else 0
-#         late_score = abs(t_delta)*x[COLS["P_LAND_LATE"]] if t_delta < 0 else 0
+    def _evaluate(self, x, out, *args, **kwargs):
+        """
+        Evaluates how good each population member is
+        """
+        t_delta = x[COLS["T_LAND_TARGET"]] - x[COLS["T_LAND_ASSIGNED"]]
+        early_score = t_delta*x[COLS["P_LAND_EARLY"]] if t_delta > 0 else 0
+        late_score = abs(t_delta)*x[COLS["P_LAND_LATE"]] if t_delta < 0 else 0
         
-#         out["F"] = [early_score, late_score]
-#         # out["G"] =
+        out["F"] = [early_score, late_score]
+        # out["G"] =
 
 # class ArchiveCallback(Callback):
 
@@ -54,6 +57,8 @@ N_CONSTRAINTS = 0
 #         self.opt.append(algorithm.opt[0].F)
 
 
+
+problem = PlaneProblem(df.shape[1], lower_bounds, upper_bounds)
 
 # algorithm = NSGA2(pop_size=n_planes)
 # callback = ArchiveCallback()
