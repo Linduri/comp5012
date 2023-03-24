@@ -2,19 +2,18 @@
 Schedules planes based on set criteria
 """
 
-import pathlib
-
 from pymoo.core.problem import ElementwiseProblem
-
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.optimize import minimize
 from pymoo.visualization.scatter import Scatter
 from pymoo.core.callback import Callback
+from data_loader import load_data, COLS
+from PIL import Image
 
+import pathlib
 import matplotlib.pyplot as plt
 
-from data_loader import load_data, COLS
-from PIL import Image, ImageColor
+
 
 # ====================================================== LOAD DATA
 
@@ -36,13 +35,16 @@ def draw_planes(planes, pixel_height=10, gap_height=3):
         land_window = int(plane[COLS["T_LAND_LATE"]] - plane[COLS["T_LAND_EARLY"]])
         for i in range(land_window):
             for j in range(pixel_height): 
-                image.putpixel((int(plane[COLS["T_LAND_EARLY"]]) + i - 1, (idx*row_height)+j), ImageColor.getrgb('red'))
+                image.putpixel((int(plane[COLS["T_LAND_EARLY"]]) + i - 1, (idx*row_height)+j), (0,180,0))
 
         for j in range(pixel_height):
-            image.putpixel((int(plane[COLS["T_LAND_ASSIGNED"]])-1, (idx*row_height)+j), ImageColor.getrgb('white'))
+            image.putpixel((int(plane[COLS["T_LAND_ASSIGNED"]])-1, (idx*row_height)+j), (255,255,255))
 
         for j in range(pixel_height):
-            image.putpixel((int(plane[COLS["T_APPEAR"]])-1, (idx*row_height)+j), (128,212,255))
+            image.putpixel((int(plane[COLS["T_APPEAR"]])-1, (idx*row_height)+j), (255,100,100))
+
+        for j in range(pixel_height):
+            image.putpixel((int(plane[COLS["T_LAND_TARGET"]])-1, (idx*row_height)+j), (255,255,128))
 
     image.show()
     # im.save('simplePixel.png') # or any image format

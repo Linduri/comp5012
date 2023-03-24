@@ -1,11 +1,8 @@
 """
 Load and parse plane data from a .txt file to a numpy array with additional metrics.
 """
-
-import random
 import re
 import numpy as np
-import pandas as pd
 
 COLS = {
     "T_APPEAR": 0,
@@ -28,7 +25,8 @@ def split_terms(line):
 
 def load_data(path):
     """
-    Load and parse plane data from a .txt file to a numpy array with additional metrics and randomised assigned landing time.
+    Load and parse plane data from a .txt file to a numpy array with additional metrics and 
+    randomised assigned landing time.
     """
     with open(path, 'r', encoding="utf-8") as file:
 
