@@ -80,8 +80,6 @@ def draw_planes(planes, pixel_height=20, gap_height=3):
     # im.save('simplePixel.png') # or any image format
 
 # ==================================================== TRAIN MODEL
-
-
 draw_planes(data)
 
 class PlaneProblem(ElementwiseProblem):
@@ -105,16 +103,21 @@ class PlaneProblem(ElementwiseProblem):
 
 
 class ArchiveCallback(Callback):
+    """
+    Record the history of the network evolution.
+    """
     def __init__(self) -> None:
         super().__init__()
         self.n_evals = []
         self.opt = []
         self.data["penalties"] = []
+        self.data["population"] = []
 
     def notify(self, algorithm):
         self.n_evals.append(algorithm.evaluator.n_eval)
         self.opt.append(algorithm.opt[0].F)
         self.data["penalties"].append(algorithm.pop.get("F"))
+        self.data["population"].append(algorithm.pop.get("x"))
 
 
 problem = PlaneProblem(data.shape[1], lower_bounds, upper_bounds)
@@ -135,7 +138,15 @@ res = minimize(problem,
                verbose=False,
                callback=ArchiveCallback())
 
+# =================================================== SHOW RESULTS
+# ======================================= SHOW PENATLY PROGRESSION
 combined_early_and_late = [[-x[0]+x[1] for x in X] for X in res.algorithm.callback.data["penalties"]]
 combined_early_and_late_df = pd.DataFrame(data=combined_early_and_late, columns=[f"plane_{i}" for i in range(len(combined_early_and_late[0]))])
 
-combined_early_and_late_df.plot()
+ax = combined_early_and_late_df.plot()
+ax.set_xlabel("Generation")
+ax.set_ylabel("Penalty (Negative is early, positive is late)")
+
+# ==================================== SHOW POPULATION PROGRESSION
+# print(res.algorithm.callback.data["population"])
+draw_planes(res.algorithm.callback.data["population"][-1])
