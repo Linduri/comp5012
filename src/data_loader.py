@@ -1,5 +1,5 @@
 """
-Load and parse plane data from a .txt file to a pandas dataframe with additional metrics.
+Load and parse plane data from a .txt file to a numpy array with additional metrics.
 """
 
 import random
@@ -26,7 +26,7 @@ def split_terms(line):
 
 def load_data(path):
     """
-    Load and parse plane data from a .txt file to a pandas dataframe with additional metrics.
+    Load and parse plane data from a .txt file to a numpy array with additional metrics and randomised assigned landing time.
     """
     with open(path, 'r', encoding="utf-8") as file:
 
@@ -86,11 +86,12 @@ def load_data(path):
 
     columns = ["t_appear", "t_land_early", "t_land_target", "t_land_assigned",
             "t_land_late", "p_land_early", "p_land_late"] + [f"sep_{i}" for i in range(n_planes)]
-    data_out = pd.DataFrame(data=data, columns=columns)
+    
+    # data_out = pd.DataFrame(data=data, columns=columns)
     # print(df)
 
     #Get upper and lower bounds for data
     lower_bounds = data.min(axis=0)
     upper_bounds = data.max(axis=0)
 
-    return n_planes, t_freeze, data_out, lower_bounds, upper_bounds
+    return n_planes, t_freeze, data, lower_bounds, upper_bounds

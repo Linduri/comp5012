@@ -14,6 +14,7 @@ from pymoo.core.callback import Callback
 import matplotlib.pyplot as plt
 
 from data_loader import load_data, COLS
+from PIL import Image, ImageColor
 
 # ====================================================== LOAD DATA
 
@@ -22,6 +23,16 @@ filepath = f"{pathlib.Path(__file__).parent.parent.absolute()}/data/airland{FILE
 
 n_planes, t_freeze, df, lower_bounds, upper_bounds = load_data(filepath)
 print(df)
+
+# ================================================== DRAW SCHEDULE
+def draw_pop(population):
+
+
+im = Image.new('1', (1,1)) # create the Image of size 1 pixel 
+im.putpixel((0,0), ImageColor.getcolor('black', '1')) # or whatever color you wish
+
+im.save('simplePixel.png') # or any image format
+
 # ==================================================== TRAIN MODEL
 
 N_OBJECTIVES = 2
@@ -45,16 +56,16 @@ class PlaneProblem(ElementwiseProblem):
         out["F"] = [early_score, late_score]
         # out["G"] =
 
-# class ArchiveCallback(Callback):
+class ArchiveCallback(Callback):
 
-#     def __init__(self) -> None:
-#         super().__init__()
-#         self.n_evals = []
-#         self.opt = []
+    def __init__(self) -> None:
+        super().__init__()
+        self.n_evals = []
+        self.opt = []
 
-#     def notify(self, algorithm):
-#         self.n_evals.append(algorithm.evaluator.n_eval)
-#         self.opt.append(algorithm.opt[0].F)
+    def notify(self, algorithm):
+        self.n_evals.append(algorithm.evaluator.n_eval)
+        self.opt.append(algorithm.opt[0].F)
 
 
 
