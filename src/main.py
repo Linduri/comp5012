@@ -193,7 +193,7 @@ Scatter().add(res.F).show()
 print("Start population")
 schedule.draw_planes()
 
-print("End population")
+print("End populations")
 best = res.X.reshape(
             (-1, schedule.n_planes(), schedule.n_vars()))
 
