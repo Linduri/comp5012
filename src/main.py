@@ -33,11 +33,15 @@ print("======================== Initial population ========================")
 schedule.draw_planes()
 print("====================================================================")
 
-# ============================================= DEFINE THE PROBLEM
 pop_size = 100
 offspring = 10
 n_planes = schedule.n_planes()
 
+reshaped = schedule.data().flatten()
+start_population = np.array([schedule.mutate(data=schedule.data()).flatten() for _ in range(pop_size)])
+print(start_population.shape)
+
+# ============================================= DEFINE THE PROBLEM
 
 class PlaneProblem(ElementwiseProblem):
     """
@@ -93,19 +97,17 @@ class PlaneMutation(Mutation):
         self.prob = prob
 
     def _do(self, problem, X, **kwargs):
-        _X = X.copy()
-        _schedules = _X.reshape((-1, 10, 17))
+        _schedules = X.copy()
+        _schedules = _schedules.reshape(
+            (offspring, schedule.n_planes(), schedule.n_vars()))
 
         for _schedule in _schedules:
             for _plane in _schedule:
                 if random.random() < self.prob:
-                    rand = np.random.uniform(
+                    _plane[PlaneSchedule.COLS["T_ASSIGNED"]] = random.uniform(
                         _plane[PlaneSchedule.COLS["T_EARLY"]], _plane[PlaneSchedule.COLS["T_LATE"]])
-                    _plane[PlaneSchedule.COLS["T_ASSIGNED"]] = rand
 
-        _schedules = _schedules.reshape(X.shape)
-
-        return X
+        return _schedules.reshape(X.shape)
 
 
 print("Initialising mutation...")
@@ -130,13 +132,13 @@ class ArchiveCallback(Callback):
         super().__init__()
         self.n_evals = []
         self.opt = []
-        self.data["penalties"] = []
+        self.data["F"] = []
         self.data["population"] = []
 
     def notify(self, algorithm):
         self.n_evals.append(algorithm.evaluator.n_eval)
         self.opt.append(algorithm.opt[0].F)
-        self.data["penalties"].append(algorithm.pop.get("F"))
+        self.data["F"].append(algorithm.pop.get("F"))
         self.data["population"].append(algorithm.pop.get("x"))
 
 
@@ -144,8 +146,9 @@ print("Initialising archive...")
 plane_callback = ArchiveCallback()
 
 # =============================================== DEFINE THE MODEL
-reshaped = schedule.data().flatten()
-start_population = np.array([reshaped for _ in range(pop_size)])
+# reshaped = schedule.data().flatten()
+# start_population = np.array([reshaped for _ in range(pop_size)])
+# print(start_population.shape)
 
 print("Initialising algorithm...")
 plane_algorithm = NSGA2(
@@ -157,10 +160,10 @@ plane_algorithm = NSGA2(
 
 # =================================== DEFINE TERMINATION CONDITION
 print("Initialising termination...")
-plane_termination = get_termination("n_gen", 40)
+plane_termination = get_termination("n_gen", 1000)
 
 # ====================================================== RUN MODEL
-print("Minimise problem...")
+print("Minimising problem...")
 res = minimize(problem=plane_problem,
                algorithm=plane_algorithm,
                termination=plane_termination,
@@ -172,7 +175,8 @@ res = minimize(problem=plane_problem,
 # =================================================== SHOW RESULTS
 # ======================================= SHOW PENATLY PROGRESSION
 combined_early_and_late = [[-x[0]+x[1] for x in X]
-                           for X in res.algorithm.callback.data["penalties"]]
+                           for X in res.algorithm.callback.data["F"]]
+
 combined_early_and_late_df = pd.DataFrame(data=combined_early_and_late, columns=[
     f"plane_{i}" for i in range(len(combined_early_and_late[0]))])
 
@@ -182,7 +186,14 @@ plt.xlabel("Generation")
 plt.ylabel("Penalty (Negative is early, positive is late)")
 plt.show()
 
+from pymoo.visualization.scatter import Scatter
+Scatter().add(res.F).show()
+
 # ==================================== SHOW POPULATION PROGRESSION
+print("Start population")
+schedule.draw_planes()
+
 print("End population")
-best = res.X.reshape((-1, 17))
-schedule.draw_planes(data=best)
+best = res.X.reshape(
+            (-1, schedule.n_planes(), schedule.n_vars()))
+schedule.draw_planes(data=best[0])
