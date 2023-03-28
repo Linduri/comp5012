@@ -22,8 +22,11 @@ FILE_IDX = 1
 filepath = f"{pathlib.Path(__file__).parent.parent.absolute()}/data/airland{FILE_IDX}.txt"
 
 schedule = PlaneSchedule(filepath)
-print(pd.DataFrame(schedule.raw()))
-print(pd.DataFrame(schedule.data()))
+schedule.draw_planes()
+
+schedule.mutate()
+schedule.draw_planes()
+schedule.mutate(prob=0.5)
 schedule.draw_planes()
 
 # n_planes, t_freeze, data, lower_bounds, upper_bounds = load_data(filepath)

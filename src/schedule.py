@@ -4,6 +4,7 @@ Load and parse plane data from a .txt file to a numpy array with additional metr
 import re
 import logging
 import numpy as np
+import random
 from PIL import Image, ImageDraw
 
 class PlaneSchedule():
@@ -174,6 +175,19 @@ class PlaneSchedule():
         for j in range(length):
                 image.putpixel((x+j, y), (0, 0, 0))
 
+    def mutate(self, prob=1.0, data=None):
+        """
+        Randomly mutate the schedule
+        """
+        plane_data = self.__norm_data if data is None else data
+
+        for plane in plane_data:
+            if random.random() < prob:
+                plane[self.COLS["T_ASSIGNED"]] = np.random.uniform(plane[self.COLS["T_EARLY"]], plane[self.COLS["T_LATE"]])
+
+        return plane_data
+        
+
     def draw_planes(self, width=512, data=None, pixel_height=20, gap_height=3):
         """
         Draw plane event times for easier analysis of the data.
@@ -189,7 +203,6 @@ class PlaneSchedule():
         bar_height = pixel_height-gap_height
 
         image = Image.new('RGB', (width, self.__norm_data.shape[0]*row_height))
-        print(f"{width},{self.__norm_data.shape[0]*row_height}")
         ImageDraw.floodfill(image, xy=(0, 0), value=(255, 255, 255))
 
         for idx, plane in enumerate(plane_data):
