@@ -5,6 +5,7 @@ import re
 import logging
 import numpy as np
 
+
 class PlaneSchedule():
     """
     Load and parse a plance schedule file.
@@ -120,13 +121,23 @@ class PlaneSchedule():
 
         self.__norm_data = self.__raw_data
 
+        # Time features should be normalised to the same scale
+        # across all time features not per time feature,
         lower_bounds = self.__norm_data.min(axis=0)
         upper_bounds = self.__norm_data.max(axis=0)
 
         t_earliest = lower_bounds[self.COLS["T_APPEAR"]]
         t_latest = upper_bounds[self.COLS["T_LATE"]]
 
-        # Normalise times
         for time_col in ["T_APPEAR", "T_EARLY", "T_TARGET", "T_ASSIGNED", "T_LATE"]:
             self.__norm_data[:, self.COLS[time_col]] = np.interp(
                 self.__norm_data[:, self.COLS[time_col]], (t_earliest, t_latest), (0, 1))
+
+        # Penalty scores should remain in the same scale.
+        p_min = 0
+        p_max = max(upper_bounds[self.COLS["P_EARLY"]], upper_bounds[self.COLS["P_LATE"]])
+
+        for penalty_col in ["P_EARLY", "P_LATE"]:
+            self.__norm_data[:, self.COLS[penalty_col]] = np.interp(
+                self.__norm_data[:, self.COLS[penalty_col]], (p_min, p_max), (0, 1))
+            
