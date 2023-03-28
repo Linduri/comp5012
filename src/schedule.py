@@ -164,7 +164,7 @@ class PlaneSchedule():
         print(self.__draw_data)
 
     def __draw_vert__(self, image, x, row, row_height, gap_height, dotted=False):
-        for j in range(row_height-2*gap_height+1):
+        for j in range(row_height-2*gap_height):
                 if dotted:
                     col = (0, 0, 0) if j % 2 == 0 else (255, 255, 255)
                 else:
@@ -194,6 +194,10 @@ class PlaneSchedule():
         for idx, plane in enumerate(self.__draw_data):
             # Draw appearance time
             self.__draw_vert__(image, plane[self.COLS["T_APPEAR"]], idx, row_height, gap_height)
+
+            # Draw appearnce time whisker
+            whisker_length = plane[self.COLS["T_EARLY"]] - plane[self.COLS["T_APPEAR"]]
+            self.__draw_hori__(image, plane[self.COLS["T_APPEAR"]], (idx*row_height)+int((pixel_height+gap_height)/2), whisker_length)
 
             # Draw left (early) and right (late) lines
             self.__draw_vert__(image, plane[self.COLS["T_EARLY"]], idx, row_height, gap_height)
