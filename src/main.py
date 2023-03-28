@@ -23,11 +23,15 @@ filepath = f"{pathlib.Path(__file__).parent.parent.absolute()}/data/airland{FILE
 
 schedule = PlaneSchedule(filepath)
 schedule.draw_planes()
+print(schedule.evaluate())
 
-schedule.mutate()
+schedule.mutate(prob=1.0)
 schedule.draw_planes()
+print(schedule.evaluate())
+
 schedule.mutate(prob=0.5)
 schedule.draw_planes()
+print(schedule.evaluate())
 
 # n_planes, t_freeze, data, lower_bounds, upper_bounds = load_data(filepath)
 
