@@ -15,6 +15,7 @@ class PlaneSchedule():
     logger = logging.getLogger(__name__)
 
     __n_planes = None
+    __n_vars = None
     __t_freeze = None
     __raw_data = None
     __norm_data = None
@@ -45,6 +46,15 @@ class PlaneSchedule():
         Get the raw data loaded from file as a numpy array.
         """
         return self.__raw_data
+
+    def n_planes(self):
+        """
+        Get the number of planes in this schedule.
+        """
+        return self.__n_planes
+
+    def n_vars(self):
+        return self.__n_vars
 
     def data(self):
         """
@@ -86,8 +96,8 @@ class PlaneSchedule():
             # Keep reading all remaining terms in groups of 6 + n_planes
             # columns = plane attributes + n_planes separation
             # rows = n_planes
-            var_per_plane = len(self.COLS) + n_planes
-            data = np.zeros([n_planes, var_per_plane])
+            self.__n_vars = len(self.COLS) + n_planes
+            data = np.zeros([n_planes, self.__n_vars])
 
             term_idx = 0
             plane_idx = 0
@@ -118,7 +128,7 @@ class PlaneSchedule():
                         data[plane_idx, term_idx] = term
 
                     term_idx += 1
-                    if term_idx == var_per_plane:
+                    if term_idx == self.__n_vars:
                         plane_idx += 1
                         term_idx = 0
 
