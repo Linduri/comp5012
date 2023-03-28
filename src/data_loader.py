@@ -3,6 +3,8 @@ Load and parse plane data from a .txt file to a numpy array with additional metr
 """
 import re
 import numpy as np
+from typing import List
+from pydantic import BaseModel
 
 COLS = {
     "T_APPEAR": 0,
@@ -14,6 +16,19 @@ COLS = {
     "P_LAND_LATE": 6
 }
 
+class PlaneData(BaseModel):
+    t_appear: float
+    t_early: float
+    t_target: float
+    t_assigned: float
+    t_late: float
+    p_early: float
+    p_late: float
+
+class ScheduleData(BaseModel):
+    n_planes: int
+    t_freeze: float
+    data: List[PlaneData]
 
 def split_terms(line):
     """
@@ -22,13 +37,14 @@ def split_terms(line):
     nums = re.split(r"\s+", line.strip())
     return [float(num) for num in nums]
 
-
 def load_data(path):
     """
     Load and parse plane data from a .txt file to a numpy array with additional metrics and 
     randomised assigned landing time.
     """
     with open(path, 'r', encoding="utf-8") as file:
+
+        schedule = ScheduleData()
 
         # Get the plane count and freeze time from the first line.
         next_line = file.readline()
@@ -91,7 +107,6 @@ def load_data(path):
     upper_bounds = data.max(axis=0)
 
     return n_planes, t_freeze, data, lower_bounds, upper_bounds
-
 
 def init_population(base_population, n_members=50):
     """

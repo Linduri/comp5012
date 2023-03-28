@@ -15,6 +15,7 @@ from PIL import Image, ImageDraw
 import pandas as pd
 
 from data_loader import load_data, init_population, COLS
+from schedule import PlaneSchedule
 # ================================================== DRAW SCHEDULE
 def draw_planes(planes, pixel_height=20, gap_height=3):
     """
@@ -71,123 +72,121 @@ def draw_planes(planes, pixel_height=20, gap_height=3):
     # im.save('simplePixel.png') # or any image format
 
 # ====================================================== LOAD DATA
-
 FILE_IDX = 1
 filepath = f"{pathlib.Path(__file__).parent.parent.absolute()}/data/airland{FILE_IDX}.txt"
 
-n_planes, t_freeze, data, lower_bounds, upper_bounds = load_data(filepath)
+schedule = PlaneSchedule(filepath)
+print(schedule.data())
 
-# ========================================== INITIALISE POPULATION
+# n_planes, t_freeze, data, lower_bounds, upper_bounds = load_data(filepath)
 
-print("Initialising population...")
-schedules = init_population(data, 3)
+# # ========================================== INITIALISE POPULATION
 
-# for pop in populations:
-#     draw_planes(pop)
+# print("Initialising population...")
+# schedules = init_population(data, 3)
+
+# # for pop in populations:
+# #     draw_planes(pop)
 
 # ============================================= DEFINE THE PROBLEM
-class PlaneProblem(ElementwiseProblem):
-    """
-    Defines the plane problem
-    """
+# class PlaneProblem(ElementwiseProblem):
+#     """
+#     Defines the plane problem
+#     """
 
-    def __init__(self, xl, xu):
-        super().__init__(n_var=1, n_obj=2, n_ieq_constr=0, xl=xl, xu=xu)
+#     def __init__(self, xl, xu):
+#         super().__init__(n_var=len(xl), n_obj=2, n_ieq_constr=0, xl=xl, xu=xu)
 
-    def _evaluate(self, x, out, *args, **kwargs):
-        """
-        Evaluates how good each population member is
-        """
-        # print(x)
-        t_delta = x[:,COLS["T_LAND_ASSIGNED"]]- x[:,COLS["T_LAND_TARGET"]]
-        early_score = np.sum(np.where(t_delta < 0, t_delta*x[:,COLS["P_LAND_EARLY"]], 0))
-        late_score = np.sum(np.where(t_delta > 0, t_delta*x[:,COLS["P_LAND_LATE"]], 0))
+#     def _evaluate(self, x, out, *args, **kwargs):
+#         """
+#         Evaluates how good each population member is
+#         """
+#         t_delta = x[:,COLS["T_LAND_ASSIGNED"]]- x[:,COLS["T_LAND_TARGET"]]
+#         early_score = np.sum(np.where(t_delta < 0, t_delta*x[:,COLS["P_LAND_EARLY"]], 0))
+#         late_score = np.sum(np.where(t_delta > 0, t_delta*x[:,COLS["P_LAND_LATE"]], 0))
 
-        print(early_score)
-        print(late_score)
+#         out["F"] = [early_score, late_score]
+#         # out["G"] =
 
-        out["F"] = [early_score, late_score]
-        # out["G"] =
+# print("Initialising problem...")
+# plane_problem = PlaneProblem(lower_bounds, upper_bounds)
+# # for schedule in schedules:
+# #     res = []
+# #     problem._evaluate(pop, res)
+# #     print(problem._evaluate(pop, res))
 
-print("Initialising problem...")
-plane_problem = PlaneProblem(lower_bounds, upper_bounds)
-# for schedule in schedules:
-#     res = []
-#     problem._evaluate(pop, res)
-    # print(problem._evaluate(pop, res))
+# # ============================================ DEFINE THE MUTATION
+# class PlaneMutation(Mutation):
+#     """
+#     Mutates each schedule
+#     """
+#     def __init__(self, prob=1.0):
+#         super().__init__()
+#         self.prob = prob
 
-# ============================================ DEFINE THE MUTATION
-class PlaneMutation(Mutation):
-    """
-    Mutates each schedule
-    """
-    def __init__(self, prob=1.0):
-        super().__init__()
-        self.prob = prob
+#     def _do(self, problem, X, **kwargs):
+#         _schedule = X.copy()
 
-    def _do(self, problem, X, **kwargs):
-        _schedule = X.copy()
+#         for plane in _schedule:
+#             if np.random.random() < self.prob:
+#                 plane[COLS["T_LAND_ASSIGNED"]] = np.random.uniform(
+#                     plane[COLS["T_LAND_EARLY"]], plane[COLS["T_LAND_LATE"]])
 
-        for plane in _schedule:
-            if np.random.random() < self.prob:
-                plane[COLS["T_LAND_ASSIGNED"]] = np.random.uniform(
-                    plane[COLS["T_LAND_EARLY"]], plane[COLS["T_LAND_LATE"]])
+#         return _schedule
 
-        return _schedule
-    
-print("Initialising problem...")
-plane_mutation = PlaneMutation()
+# print("Initialising problem...")
+# plane_mutation = PlaneMutation()
 
-# for idx, schedule in enumerate(schedules):
-#     print(f"Schedule {idx} before mutation")
-#     draw_planes(schedule)
+# # for idx, schedule in enumerate(schedules):
+# #     print(f"Schedule {idx} before mutation")
+# #     draw_planes(schedule)
 
-#     print(f"Schedule {idx} after mutation")
-#     draw_planes(plane_mutation._do(plane_problem, schedule))
-    
-# =================================== DEFINE THE ARCHIVE MECHANISM
-class ArchiveCallback(Callback):
-    """
-    Record the history of the network evolution.
-    """
+# #     print(f"Schedule {idx} after mutation")
+# #     draw_planes(plane_mutation._do(plane_problem, schedule))
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.n_evals = []
-        self.opt = []
-        self.data["penalties"] = []
-        self.data["population"] = []
+# # =================================== DEFINE THE ARCHIVE MECHANISM
+# class ArchiveCallback(Callback):
+#     """
+#     Record the history of the network evolution.
+#     """
 
-    def notify(self, algorithm):
-        self.n_evals.append(algorithm.evaluator.n_eval)
-        self.opt.append(algorithm.opt[0].F)
-        self.data["penalties"].append(algorithm.pop.get("F"))
-        self.data["population"].append(algorithm.pop.get("x"))
+#     def __init__(self) -> None:
+#         super().__init__()
+#         self.n_evals = []
+#         self.opt = []
+#         self.data["penalties"] = []
+#         self.data["population"] = []
 
-print("Initialising archive...")
-plane_callback = ArchiveCallback()
+#     def notify(self, algorithm):
+#         self.n_evals.append(algorithm.evaluator.n_eval)
+#         self.opt.append(algorithm.opt[0].F)
+#         self.data["penalties"].append(algorithm.pop.get("F"))
+#         self.data["population"].append(algorithm.pop.get("x"))
 
-# =============================================== DEFINE THE MODEL
-print("Initialising algorithm...")
-plane_algorithm = NSGA2(
-    pop_size=n_planes,
-    n_offsprings=10,
-    sampling=schedules,
-    mutation = plane_mutation
-)
+# print("Initialising archive...")
+# plane_callback = ArchiveCallback()
 
-# =================================== DEFINE TERMINATION CONDITION
-print("Initialising termination...")
-plane_termination = get_termination("n_gen", 40)
+# # =============================================== DEFINE THE MODEL
+# print("Initialising algorithm...")
+# plane_algorithm = NSGA2(
+#     pop_size=n_planes,
+#     n_offsprings=10,
+#     sampling=schedules,
+#     mutation = plane_mutation
+# )
 
-# ====================================================== RUN MODEL
-res = minimize(problem=plane_problem,
-               algorithm=plane_algorithm,
-               termination=plane_termination,
-               seed=1,
-               save_history=True,
-               verbose=False,
-               callback=plane_callback)
+# # =================================== DEFINE TERMINATION CONDITION
+# print("Initialising termination...")
+# plane_termination = get_termination("n_gen", 40)
+
+# # ====================================================== RUN MODEL
+# res = minimize(problem=plane_problem,
+#                algorithm=plane_algorithm,
+#                termination=plane_termination,
+#                seed=1,
+#                save_history=True,
+#                verbose=False,
+#                callback=plane_callback)
 
 # # =================================================== SHOW RESULTS
 # # ======================================= SHOW PENATLY PROGRESSION
