@@ -2,12 +2,13 @@
 Load and parse plane data from a .txt file to a numpy array with additional metrics.
 """
 import re
-import numpy as np
-from typing import List
-from pydantic import BaseModel
 import logging
+import numpy as np
 
 class PlaneSchedule():
+    """
+    Load and parse a plance schedule file.
+    """
     logger = logging.getLogger(__name__)
 
     __n_planes = None
@@ -26,19 +27,25 @@ class PlaneSchedule():
     }
 
     def __init__(self, filepath):
-        self.__n_planes, self.__t_freeze, self.__raw_data = self.__load_raw__(filepath)
+        self.__n_planes, self.__t_freeze, self.__raw_data = self.__load_raw__(
+            filepath)
 
-        try:            
+        try:
             self.__normalise_data__()
         except ValueError as error:
             self.logger.error("Failed to normalise raw data")
             raise error
 
-
     def raw(self):
+        """
+        Get the raw data loaded from file as a numpy array.
+        """
         return self.__raw_data
 
     def data(self):
+        """
+        Get the raw data normalised between 0 and 1 as a numpy array.
+        """
         return self.__norm_data
 
     def __split_terms__(self, line):
@@ -110,7 +117,7 @@ class PlaneSchedule():
     def __normalise_data__(self):
         if self.__raw_data is None:
             raise ValueError("No raw data is loaded to normalise")
-        
+
         self.__norm_data = self.__raw_data
 
         lower_bounds = self.__norm_data.min(axis=0)
@@ -119,6 +126,7 @@ class PlaneSchedule():
         t_earliest = lower_bounds[self.COLS["T_APPEAR"]]
         t_latest = upper_bounds[self.COLS["T_LATE"]]
 
-        #Normalise times
+        # Normalise times
         for time_col in ["T_APPEAR", "T_EARLY", "T_TARGET", "T_ASSIGNED", "T_LATE"]:
-            self.__norm_data[:, self.COLS[time_col]] = np.interp(self.__norm_data[:, self.COLS[time_col]], (t_earliest, t_latest), (0, 1))           
+            self.__norm_data[:, self.COLS[time_col]] = np.interp(
+                self.__norm_data[:, self.COLS[time_col]], (t_earliest, t_latest), (0, 1))
