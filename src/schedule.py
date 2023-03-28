@@ -169,11 +169,11 @@ class PlaneSchedule():
             self.__norm_data[:, len(self.COLS) + i] = np.interp(
                 self.__norm_data[:, len(self.COLS) + i], (i_min, i_max), (0, 1))
 
-    def __generate_draw_data__(self, width):
-        if self.__norm_data is None:
-            raise ValueError("No normalised data is loaded to normalise")
+    def __generate_draw_data__(self, data, width):
+        # if self.__norm_data is None:
+        #     raise ValueError("No normalised data is loaded to normalise")
 
-        self.__draw_data = (self.__norm_data.copy() * (width - 1)).astype(int)
+        return (data.copy() * (width - 1)).astype(int)
 
     def __draw_vert__(self, image, x, row, row_height, gap_height, dotted=False):
         for j in range(row_height-2*gap_height):
@@ -229,10 +229,9 @@ class PlaneSchedule():
         """
 
         if data is None:
-            self.__generate_draw_data__(width)
-            plane_data = self.__draw_data
+            plane_data = self.__generate_draw_data__(self.__norm_data, width)
         else:
-            plane_data = data
+            plane_data = self.__generate_draw_data__(data, width)
 
         row_height = pixel_height+gap_height
         bar_height = pixel_height-gap_height

@@ -171,17 +171,20 @@ res = minimize(problem=plane_problem,
 
 # =================================================== SHOW RESULTS
 # ======================================= SHOW PENATLY PROGRESSION
-# combined_early_and_late = [[-x[0]+x[1] for x in X]
-#                            for X in res.algorithm.callback.data["penalties"]]
-# combined_early_and_late_df = pd.DataFrame(data=combined_early_and_late, columns=[
-#     f"plane_{i}" for i in range(len(combined_early_and_late[0]))])
+combined_early_and_late = [[-x[0]+x[1] for x in X]
+                           for X in res.algorithm.callback.data["penalties"]]
+combined_early_and_late_df = pd.DataFrame(data=combined_early_and_late, columns=[
+    f"plane_{i}" for i in range(len(combined_early_and_late[0]))])
 
-# print("Penalty evolution")
-# plt.plot(combined_early_and_late_df)
-# plt.xlabel("Generation")
-# plt.ylabel("Penalty (Negative is early, positive is late)")
-# plt.show()
+print("Penalty evolution")
+plt.plot(combined_early_and_late_df)
+plt.xlabel("Generation")
+plt.ylabel("Penalty (Negative is early, positive is late)")
+plt.show()
 
 # ==================================== SHOW POPULATION PROGRESSION
 print("End population")
+best = res.X.reshape((-1, 10))
+# print(res.algorithm.callback.data["population"][-1].shape)
+schedule.draw_planes(data=best)
 # draw_planes(res.algorithm.callback.data["population"][-1])
