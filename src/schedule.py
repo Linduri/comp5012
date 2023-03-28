@@ -4,7 +4,7 @@ Load and parse plane data from a .txt file to a numpy array with additional metr
 import re
 import logging
 import numpy as np
-
+from PIL import Image, ImageDraw
 
 class PlaneSchedule():
     """
@@ -16,6 +16,7 @@ class PlaneSchedule():
     __t_freeze = None
     __raw_data = None
     __norm_data = None
+    __draw_data = None
 
     COLS = {
         "T_APPEAR": 0,
@@ -48,6 +49,12 @@ class PlaneSchedule():
         Get the raw data normalised between 0 and 1 as a numpy array.
         """
         return self.__norm_data
+    
+    def draw_data(self):
+        """
+        Get the draw data of the normalised data.
+        """
+        return self.__draw_data
 
     def __split_terms__(self, line):
         """
@@ -119,7 +126,7 @@ class PlaneSchedule():
         if self.__raw_data is None:
             raise ValueError("No raw data is loaded to normalise")
 
-        self.__norm_data = self.__raw_data
+        self.__norm_data = self.__raw_data.copy()
 
         # Time features should be normalised to the same scale
         # across all time features not per time feature,
@@ -133,11 +140,75 @@ class PlaneSchedule():
             self.__norm_data[:, self.COLS[time_col]] = np.interp(
                 self.__norm_data[:, self.COLS[time_col]], (t_earliest, t_latest), (0, 1))
 
-        # Penalty scores should remain in the same scale.
+        # Penalty scores should remain in the same scale across all penalty columns.
         p_min = 0
         p_max = max(upper_bounds[self.COLS["P_EARLY"]], upper_bounds[self.COLS["P_LATE"]])
 
         for penalty_col in ["P_EARLY", "P_LATE"]:
             self.__norm_data[:, self.COLS[penalty_col]] = np.interp(
                 self.__norm_data[:, self.COLS[penalty_col]], (p_min, p_max), (0, 1))
-            
+        # Interval should remain in the same scale across all interval columns.
+        i_min = 0
+        i_max = max([upper_bounds[len(self.COLS) + i] for i in range(self.__n_planes)])
+
+        for i in range(self.__n_planes):
+            self.__norm_data[:, len(self.COLS) + i] = np.interp(
+                self.__norm_data[:, len(self.COLS) + i], (i_min, i_max), (0, 1))
+    
+    def __generate_draw_data__(self, width):
+        if self.__norm_data is None:
+            raise ValueError("No normalised data is loaded to normalise")
+
+        self.__draw_data = (self.__norm_data.copy() * (width - 1)).astype(int)
+
+        print(self.__draw_data)
+
+    def __draw_vert__(self, image, x, row, row_height, gap_height, dotted=False):
+        for j in range(row_height-2*gap_height+1):
+                if dotted:
+                    col = (0, 0, 0) if j % 2 == 0 else (255, 255, 255)
+                else:
+                    col = (0, 0, 0)
+                
+                image.putpixel((x, (row*row_height)+gap_height+j), col)
+
+    def __draw_hori__(self, image, x, y, length):
+        for j in range(length):
+                image.putpixel((x+j, y), (0, 0, 0))
+
+    def draw_planes(self, pixel_height=20, gap_height=3):
+        """
+        Draw plane event times for easier analysis of the data.
+        """
+
+        width = 512
+        self.__generate_draw_data__(width)
+
+        row_height = pixel_height+gap_height
+        bar_height = pixel_height-gap_height
+
+        image = Image.new('RGB', (width, self.__norm_data.shape[0]*row_height))
+        print(f"{width},{self.__norm_data.shape[0]*row_height}")
+        ImageDraw.floodfill(image, xy=(0, 0), value=(255, 255, 255))
+
+        for idx, plane in enumerate(self.__draw_data):
+            # Draw appearance time
+            self.__draw_vert__(image, plane[self.COLS["T_APPEAR"]], idx, row_height, gap_height)
+
+            # Draw left (early) and right (late) lines
+            self.__draw_vert__(image, plane[self.COLS["T_EARLY"]], idx, row_height, gap_height)
+            self.__draw_vert__(image, plane[self.COLS["T_LATE"]], idx, row_height, gap_height)
+
+            # Draw bars
+            bar_length = plane[self.COLS["T_LATE"]] - plane[self.COLS["T_EARLY"]]
+            bar_top = (idx*row_height)+gap_height
+            self.__draw_hori__(image, plane[self.COLS["T_EARLY"]], bar_top, bar_length)
+            self.__draw_hori__(image, plane[self.COLS["T_EARLY"]], bar_top+bar_height, bar_length)
+
+            # Draw assigned time
+            self.__draw_vert__(image, plane[self.COLS["T_ASSIGNED"]], idx, row_height, gap_height)
+
+            # Draw target time
+            self.__draw_vert__(image, plane[self.COLS["T_TARGET"]], idx, row_height, gap_height, dotted=True)
+
+        image.show()

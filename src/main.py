@@ -16,67 +16,15 @@ import pandas as pd
 
 from data_loader import load_data, init_population, COLS
 from schedule import PlaneSchedule
-# ================================================== DRAW SCHEDULE
-def draw_planes(planes, pixel_height=20, gap_height=3):
-    """
-    Draw plane event times for easier analysis of the data.
-    """
-    _lower_bounds = planes.min(axis=0)
-    _upper_bounds = planes.max(axis=0)
-    width = int(_upper_bounds[COLS["T_LAND_EARLY"]] +
-                _upper_bounds[COLS["T_LAND_LATE"]] - _lower_bounds[COLS["T_LAND_EARLY"]])
-    row_height = pixel_height+gap_height
-
-    image = Image.new('RGB', (width, planes.shape[0]*row_height))
-    ImageDraw.floodfill(image, xy=(0, 0), value=(255, 255, 255))
-
-    for idx, plane in enumerate(planes):
-        land_window = int(plane[COLS["T_LAND_LATE"]] -
-                          plane[COLS["T_LAND_EARLY"]])
-        for i in range(land_window):
-            # Draw top and bottom lines
-            image.putpixel(
-                (int(plane[COLS["T_LAND_EARLY"]]) + i - 1, (idx*row_height)+gap_height), (0, 0, 0))
-            image.putpixel((int(plane[COLS["T_LAND_EARLY"]]) + i - 1,
-                           (idx*row_height)+row_height-gap_height-1), (0, 0, 0))
-
-        # Draw left (early) and right (late) lines
-        for j in range(pixel_height-gap_height):
-            image.putpixel(
-                (int(plane[COLS["T_LAND_EARLY"]])-1, (idx*row_height)+gap_height+j), (0, 0, 0))
-            image.putpixel(
-                (int(plane[COLS["T_LAND_LATE"]])-1, (idx*row_height)+gap_height+j), (0, 0, 0))
-
-        # Draw appearance time
-        for j in range(pixel_height-gap_height):
-            image.putpixel(
-                (int(plane[COLS["T_APPEAR"]])-1, (idx*row_height)+gap_height+j), (0, 0, 0))
-
-        # Draw appearance time whisker
-        land_delay = int(plane[COLS["T_LAND_EARLY"]] - plane[COLS["T_APPEAR"]])
-        for i in range(land_delay):
-            image.putpixel((int(plane[COLS["T_APPEAR"]]) + i - 1,
-                           (idx*row_height)+int((pixel_height+gap_height)/2)), (0, 0, 0))
-
-        # Draw assigned time
-        for j in range(pixel_height-gap_height):
-            image.putpixel(
-                (int(plane[COLS["T_LAND_ASSIGNED"]])-1, (idx*row_height)+gap_height+j), (0, 0, 0))
-
-        # Draw target time
-        for j in range(pixel_height-gap_height-1):
-            image.putpixel((int(plane[COLS["T_LAND_TARGET"]])-1, (idx*row_height) +
-                           gap_height+j), (0, 0, 0) if j % 2 == 0 else (255, 255, 255))
-
-    image.show()
-    # im.save('simplePixel.png') # or any image format
 
 # ====================================================== LOAD DATA
 FILE_IDX = 1
 filepath = f"{pathlib.Path(__file__).parent.parent.absolute()}/data/airland{FILE_IDX}.txt"
 
 schedule = PlaneSchedule(filepath)
-print(schedule.data())
+print(pd.DataFrame(schedule.raw()))
+print(pd.DataFrame(schedule.data()))
+schedule.draw_planes()
 
 # n_planes, t_freeze, data, lower_bounds, upper_bounds = load_data(filepath)
 
