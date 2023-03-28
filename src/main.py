@@ -196,4 +196,6 @@ schedule.draw_planes()
 print("End population")
 best = res.X.reshape(
             (-1, schedule.n_planes(), schedule.n_vars()))
-schedule.draw_planes(data=best[0])
+
+for _schedule in best:
+    schedule.draw_planes(data=_schedule)
