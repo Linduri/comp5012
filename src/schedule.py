@@ -161,8 +161,6 @@ class PlaneSchedule():
 
         self.__draw_data = (self.__norm_data.copy() * (width - 1)).astype(int)
 
-        print(self.__draw_data)
-
     def __draw_vert__(self, image, x, row, row_height, gap_height, dotted=False):
         for j in range(row_height-2*gap_height):
                 if dotted:
@@ -176,13 +174,16 @@ class PlaneSchedule():
         for j in range(length):
                 image.putpixel((x+j, y), (0, 0, 0))
 
-    def draw_planes(self, pixel_height=20, gap_height=3):
+    def draw_planes(self, width=512, data=None, pixel_height=20, gap_height=3):
         """
         Draw plane event times for easier analysis of the data.
         """
 
-        width = 512
-        self.__generate_draw_data__(width)
+        if data is None:
+            self.__generate_draw_data__(width)
+            plane_data = self.__draw_data 
+        else:
+            plane_data = data
 
         row_height = pixel_height+gap_height
         bar_height = pixel_height-gap_height
@@ -191,7 +192,7 @@ class PlaneSchedule():
         print(f"{width},{self.__norm_data.shape[0]*row_height}")
         ImageDraw.floodfill(image, xy=(0, 0), value=(255, 255, 255))
 
-        for idx, plane in enumerate(self.__draw_data):
+        for idx, plane in enumerate(plane_data):
             # Draw appearance time
             self.__draw_vert__(image, plane[self.COLS["T_APPEAR"]], idx, row_height, gap_height)
 
