@@ -184,7 +184,5 @@ plt.show()
 
 # ==================================== SHOW POPULATION PROGRESSION
 print("End population")
-best = res.X.reshape((-1, 10))
-# print(res.algorithm.callback.data["population"][-1].shape)
+best = res.X.reshape((-1, 17))
 schedule.draw_planes(data=best)
-# draw_planes(res.algorithm.callback.data["population"][-1])
