@@ -34,6 +34,7 @@ schedule.draw_planes()
 print("====================================================================")
 
 early_times = schedule.data()[:,schedule.COLS["T_EARLY"]]
+target_times = schedule.data()[:,schedule.COLS["T_TARGET"]]
 late_times = schedule.data()[:,schedule.COLS["T_LATE"]]
 
 pop_size = 100
@@ -51,6 +52,14 @@ shaped_population = np.array(pop)
 population_shape = shaped_population.shape
 starting_populaiton = shaped_population.flatten()
 
+
+def draw_times(times):
+    print("====================================================================")
+    temp = schedule.data().copy()
+    temp[:, PlaneSchedule.COLS["T_ASSIGNED"]] = times
+    schedule.draw_planes(data=temp)
+    print("====================================================================")
+
 # ============================================= DEFINE THE PROBLEM
 
 class PlaneProblem(ElementwiseProblem):
@@ -66,22 +75,31 @@ class PlaneProblem(ElementwiseProblem):
         Evaluates how good each population member is
         """
 
-        _x = np.reshape(x, (-1, 10))
+        _x = np.reshape(x, population_shape)
 
-        t_delta = _x[:, PlaneSchedule.COLS["T_ASSIGNED"]] - \
-            _x[:, PlaneSchedule.COLS["T_TARGET"]]
+        # Evaluate plane ealry/lateness
+        t_delta = _x[:, 0] - target_times
+
         early_score = np.sum(
-            np.where(t_delta < 0, t_delta*_x[:, PlaneSchedule.COLS["P_EARLY"]], 0))
-        late_score = np.sum(
-            np.where(t_delta > 0, t_delta*_x[:, PlaneSchedule.COLS["P_LATE"]], 0))
+            np.where(t_delta < 0, t_delta*early_times, 0))
 
-        # Check all planes are within the landing window.
-        constraint_not_early = np.where(
-            _x[:, PlaneSchedule.COLS["T_ASSIGNED"]] >= _x[:, PlaneSchedule.COLS["T_EARLY"]], 1, 0)
-        constraint_not_late = np.where(
-            _x[:, PlaneSchedule.COLS["T_ASSIGNED"]] <= _x[:, PlaneSchedule.COLS["T_LATE"]], 1, 0)
-        constraint_within_landing_window = constraint_not_late * constraint_not_early
-        # constraint_all_planes_within_landing_window = np.any(constraint_within_landing_window)
+        late_score = np.sum(
+            np.where(t_delta > 0, t_delta*late_times, 0))
+
+        # t_delta = _x[:, PlaneSchedule.COLS["T_ASSIGNED"]] - \
+        #     _x[:, PlaneSchedule.COLS["T_TARGET"]]
+        # early_score = np.sum(
+        #     np.where(t_delta < 0, t_delta*_x[:, PlaneSchedule.COLS["P_EARLY"]], 0))
+        # late_score = np.sum(
+        #     np.where(t_delta > 0, t_delta*_x[:, PlaneSchedule.COLS["P_LATE"]], 0))
+
+        # # Check all planes are within the landing window.
+        # constraint_not_early = np.where(
+        #     _x[:, PlaneSchedule.COLS["T_ASSIGNED"]] >= _x[:, PlaneSchedule.COLS["T_EARLY"]], 1, 0)
+        # constraint_not_late = np.where(
+        #     _x[:, PlaneSchedule.COLS["T_ASSIGNED"]] <= _x[:, PlaneSchedule.COLS["T_LATE"]], 1, 0)
+        # constraint_within_landing_window = constraint_not_late * constraint_not_early
+        # # constraint_all_planes_within_landing_window = np.any(constraint_within_landing_window)
 
         out["F"] = [early_score, late_score]
 #         # out["G"] =
