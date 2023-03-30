@@ -164,11 +164,14 @@ class ArchiveCallback(Callback):
         self.opt = []
         self.data["F"] = []
         self.data["population"] = []
+        self.data["F_best"] = []
 
     def notify(self, algorithm):
         self.n_evals.append(algorithm.evaluator.n_eval)
         self.opt.append(algorithm.opt[0].F)
-        self.data["F"].append(algorithm.pop.get("F"))
+        latest_f = algorithm.pop.get("F")
+        self.data["F"].append(latest_f)
+        self.data["F_best"].append(latest_f.min())
         self.data["population"].append(algorithm.pop.get("x"))
 
 
@@ -190,7 +193,7 @@ plane_algorithm = NSGA2(
 
 # =================================== DEFINE TERMINATION CONDITION
 print("Initialising termination...")
-plane_termination = get_termination("n_gen", 1000)
+plane_termination = get_termination("n_gen", 500)
 
 # ====================================================== RUN MODEL
 print("Minimising problem...")
@@ -210,18 +213,25 @@ res = minimize(problem=plane_problem,
 # combined_early_and_late_df = pd.DataFrame(data=combined_early_and_late, columns=[
 #     f"plane_{i}" for i in range(len(combined_early_and_late[0]))])
 
+best_f = res.algorithm.callback.data["F_best"]
+best_f_df = pd.DataFrame(data=best_f, columns=["Best F"])
+plt.plot(best_f_df)
+plt.xlabel("Generation")
+plt.ylabel("Best F")
+plt.show()
+
 # print("Penalty evolution")
 # plt.plot(combined_early_and_late_df)
 # plt.xlabel("Generation")
 # plt.ylabel("Penalty (Negative is early, positive is late)")
 # plt.show()
 
-# from pymoo.visualization.scatter import Scatter
-# Scatter().add(res.F).show()
+from pymoo.visualization.scatter import Scatter
+Scatter().add(res.F).show()
 
 # # ==================================== SHOW POPULATION PROGRESSION
-# print("Start population")
-# schedule.draw_planes()
+print("Start population")
+schedule.draw_planes()
 
 # print("End populations")
 # best = res.X.reshape(
@@ -229,3 +239,8 @@ res = minimize(problem=plane_problem,
 
 # for _schedule in best:
 #     schedule.draw_planes(data=_schedule)
+
+print("End population")
+best = res.X[0].reshape(population_shape)[:,0]
+draw_times(best)
+
