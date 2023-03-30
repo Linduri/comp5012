@@ -147,27 +147,27 @@ plane_mutation = PlaneMutation()
 # # =================================== DEFINE THE ARCHIVE MECHANISM
 
 
-# class ArchiveCallback(Callback):
-#     """
-#     Record the history of the network evolution.
-#     """
+class ArchiveCallback(Callback):
+    """
+    Record the history of the network evolution.
+    """
 
-#     def __init__(self) -> None:
-#         super().__init__()
-#         self.n_evals = []
-#         self.opt = []
-#         self.data["F"] = []
-#         self.data["population"] = []
+    def __init__(self) -> None:
+        super().__init__()
+        self.n_evals = []
+        self.opt = []
+        self.data["F"] = []
+        self.data["population"] = []
 
-#     def notify(self, algorithm):
-#         self.n_evals.append(algorithm.evaluator.n_eval)
-#         self.opt.append(algorithm.opt[0].F)
-#         self.data["F"].append(algorithm.pop.get("F"))
-#         self.data["population"].append(algorithm.pop.get("x"))
+    def notify(self, algorithm):
+        self.n_evals.append(algorithm.evaluator.n_eval)
+        self.opt.append(algorithm.opt[0].F)
+        self.data["F"].append(algorithm.pop.get("F"))
+        self.data["population"].append(algorithm.pop.get("x"))
 
 
-# print("Initialising archive...")
-# plane_callback = ArchiveCallback()
+print("Initialising archive...")
+plane_callback = ArchiveCallback()
 
 # # =============================================== DEFINE THE MODEL
 # # reshaped = schedule.data().flatten()
