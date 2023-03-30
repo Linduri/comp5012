@@ -39,18 +39,8 @@ late_times = schedule.data()[:,schedule.COLS["T_LATE"]]
 
 pop_size = 100
 offspring = 10
+generations = 500
 n_planes = schedule.n_planes()
-
-# pop = []
-# for _ in range(pop_size):
-#     assigned_times = np.random.uniform(early_times, late_times)
-#     assigned_runway = np.ones(assigned_times.shape[0])
-#     zipped = np.column_stack([assigned_times, assigned_runway])
-#     pop.append(zipped)
-
-# shaped_population = np.array(pop)
-# population_shape = shaped_population.shape
-# starting_population = shaped_population.flatten()
 
 assigned_times = np.random.uniform(early_times, late_times)
 assigned_runway = np.ones(assigned_times.shape[0])
@@ -67,6 +57,7 @@ def draw_times(times):
     print("====================================================================")
 
 # ============================================= DEFINE THE PROBLEM
+
 
 class PlaneProblem(ElementwiseProblem):
     """
@@ -92,63 +83,37 @@ class PlaneProblem(ElementwiseProblem):
         late_score = np.sum(
             np.where(t_delta > 0, t_delta*late_times, 0))
 
-        # t_delta = _x[:, PlaneSchedule.COLS["T_ASSIGNED"]] - \
-        #     _x[:, PlaneSchedule.COLS["T_TARGET"]]
-        # early_score = np.sum(
-        #     np.where(t_delta < 0, t_delta*_x[:, PlaneSchedule.COLS["P_EARLY"]], 0))
-        # late_score = np.sum(
-        #     np.where(t_delta > 0, t_delta*_x[:, PlaneSchedule.COLS["P_LATE"]], 0))
-
-        # # Check all planes are within the landing window.
-        # constraint_not_early = np.where(
-        #     _x[:, PlaneSchedule.COLS["T_ASSIGNED"]] >= _x[:, PlaneSchedule.COLS["T_EARLY"]], 1, 0)
-        # constraint_not_late = np.where(
-        #     _x[:, PlaneSchedule.COLS["T_ASSIGNED"]] <= _x[:, PlaneSchedule.COLS["T_LATE"]], 1, 0)
-        # constraint_within_landing_window = constraint_not_late * constraint_not_early
-        # # constraint_all_planes_within_landing_window = np.any(constraint_within_landing_window)
-
         out["F"] = [early_score, late_score]
 #         # out["G"] =
 
 
 print("Initialising problem...")
 plane_problem = PlaneProblem(starting_population.shape[0])
-# # for schedule in schedules:
-# #     res = []
-# #     problem._evaluate(pop, res)
-# #     print(problem._evaluate(pop, res))
 
 # ============================================ DEFINE THE MUTATION
-
-
 class PlaneMutation(Mutation):
     """
     Mutates each schedule
     """
+    
 
     def __init__(self, prob=0.2):
         super().__init__()
         self.prob = prob
 
     def _do(self, problem, X, **kwargs):
+        global current_generation
         _schedules = X.copy().reshape((-1, population_shape[0], population_shape[1]))
         for _schedule in _schedules:
             for idx, plane in enumerate(_schedule):
                 if random.random() < self.prob:
-                    plane[0] = random.uniform(early_times[idx], late_times[idx])
+                    plane[0] = random.uniform(early_times[idx], late_times[idx])      
 
         return _schedules.reshape(X.shape)
 
 
 print("Initialising mutation...")
 plane_mutation = PlaneMutation()
-
-# # # for idx, schedule in enumerate(schedules):
-# # #     print(f"Schedule {idx} before mutation")
-# # #     draw_planes(schedule)
-
-# # #     print(f"Schedule {idx} after mutation")
-# # #     draw_planes(plane_mutation._do(plane_problem, schedule))
 
 # # =================================== DEFINE THE ARCHIVE MECHANISM
 
@@ -179,10 +144,6 @@ print("Initialising archive...")
 plane_callback = ArchiveCallback()
 
 # =============================================== DEFINE THE MODEL
-# reshaped = schedule.data().flatten()
-# start_population = np.array([reshaped for _ in range(pop_size)])
-# print(start_population.shape)
-
 print("Initialising algorithm...")
 plane_algorithm = NSGA2(
     pop_size=pop_size,
@@ -193,7 +154,7 @@ plane_algorithm = NSGA2(
 
 # =================================== DEFINE TERMINATION CONDITION
 print("Initialising termination...")
-plane_termination = get_termination("n_gen", 500)
+plane_termination = get_termination("n_gen", generations)
 
 # ====================================================== RUN MODEL
 print("Minimising problem...")
@@ -233,14 +194,6 @@ Scatter().add(res.F).show()
 print("Start population")
 schedule.draw_planes()
 
-# print("End populations")
-# best = res.X.reshape(
-#             (-1, schedule.n_planes(), schedule.n_vars()))
-
-# for _schedule in best:
-#     schedule.draw_planes(data=_schedule)
-
 print("End population")
 best = res.X[0].reshape(population_shape)[:,0]
 draw_times(best)
-
