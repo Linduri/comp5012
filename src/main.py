@@ -182,9 +182,9 @@ plane_algorithm = NSGA2(
     mutation=plane_mutation
 )
 
-# # =================================== DEFINE TERMINATION CONDITION
-# print("Initialising termination...")
-# plane_termination = get_termination("n_gen", 1000)
+# =================================== DEFINE TERMINATION CONDITION
+print("Initialising termination...")
+plane_termination = get_termination("n_gen", 1000)
 
 # # ====================================================== RUN MODEL
 # print("Minimising problem...")
