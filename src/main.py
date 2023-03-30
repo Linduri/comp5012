@@ -169,18 +169,18 @@ class ArchiveCallback(Callback):
 print("Initialising archive...")
 plane_callback = ArchiveCallback()
 
-# # =============================================== DEFINE THE MODEL
-# # reshaped = schedule.data().flatten()
-# # start_population = np.array([reshaped for _ in range(pop_size)])
-# # print(start_population.shape)
+# =============================================== DEFINE THE MODEL
+# reshaped = schedule.data().flatten()
+# start_population = np.array([reshaped for _ in range(pop_size)])
+# print(start_population.shape)
 
-# print("Initialising algorithm...")
-# plane_algorithm = NSGA2(
-#     pop_size=pop_size,
-#     n_offsprings=offspring,
-#     sampling=start_population,
-#     mutation=plane_mutation
-# )
+print("Initialising algorithm...")
+plane_algorithm = NSGA2(
+    pop_size=pop_size,
+    n_offsprings=offspring,
+    sampling=starting_population,
+    mutation=plane_mutation
+)
 
 # # =================================== DEFINE TERMINATION CONDITION
 # print("Initialising termination...")
