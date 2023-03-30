@@ -50,7 +50,7 @@ for _ in range(pop_size):
 
 shaped_population = np.array(pop)
 population_shape = shaped_population.shape
-starting_populaiton = shaped_population.flatten()
+starting_population = shaped_population.flatten()
 
 
 def draw_times(times):
@@ -67,8 +67,8 @@ class PlaneProblem(ElementwiseProblem):
     Defines the plane problem
     """
 
-    def __init__(self, starting_population):
-        super().__init__(n_var=starting_population.shape[0], n_obj=2, n_ieq_constr=0, xl=0, xu=1)
+    def __init__(self, n_vars):
+        super().__init__(n_var=n_vars, n_obj=2, n_ieq_constr=0, xl=0, xu=1)
 
     def _evaluate(self, x, out, *args, **kwargs):
         """
@@ -105,41 +105,37 @@ class PlaneProblem(ElementwiseProblem):
 #         # out["G"] =
 
 
-# print("Initialising problem...")
-# plane_problem = PlaneProblem(17*10)
+print("Initialising problem...")
+plane_problem = PlaneProblem(starting_population.shape[0])
 # # for schedule in schedules:
 # #     res = []
 # #     problem._evaluate(pop, res)
 # #     print(problem._evaluate(pop, res))
 
-# # ============================================ DEFINE THE MUTATION
+# ============================================ DEFINE THE MUTATION
 
 
-# class PlaneMutation(Mutation):
-#     """
-#     Mutates each schedule
-#     """
+class PlaneMutation(Mutation):
+    """
+    Mutates each schedule
+    """
 
-#     def __init__(self, prob=1.0):
-#         super().__init__()
-#         self.prob = prob
+    def __init__(self, prob=0.2):
+        super().__init__()
+        self.prob = prob
 
-#     def _do(self, problem, X, **kwargs):
-#         _schedules = X.copy()
-#         _schedules = _schedules.reshape(
-#             (offspring, schedule.n_planes(), schedule.n_vars()))
+    def _do(self, problem, X, **kwargs):
+        _planes = X.copy().reshape(population_shape)
 
-#         for _schedule in _schedules:
-#             for _plane in _schedule:
-#                 if random.random() < self.prob:
-#                     _plane[PlaneSchedule.COLS["T_ASSIGNED"]] = random.uniform(
-#                         _plane[PlaneSchedule.COLS["T_EARLY"]], _plane[PlaneSchedule.COLS["T_LATE"]])
+        for idx, plane in enumerate(_planes):
+            if random.random() < self.prob:
+                plane[0] = random.uniform(early_times[idx], late_times[idx])
 
-#         return _schedules.reshape(X.shape)
+        return _planes.reshape(X.shape)
 
 
-# print("Initialising mutation...")
-# plane_mutation = PlaneMutation()
+print("Initialising mutation...")
+plane_mutation = PlaneMutation()
 
 # # # for idx, schedule in enumerate(schedules):
 # # #     print(f"Schedule {idx} before mutation")
