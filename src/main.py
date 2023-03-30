@@ -41,17 +41,23 @@ pop_size = 100
 offspring = 10
 n_planes = schedule.n_planes()
 
-pop = []
-for _ in range(pop_size):
-    assigned_times = np.random.uniform(early_times, late_times)
-    assigned_runway = np.ones(assigned_times.shape[0])
-    zipped = np.column_stack([assigned_times, assigned_runway])
-    pop.append(zipped)
+# pop = []
+# for _ in range(pop_size):
+#     assigned_times = np.random.uniform(early_times, late_times)
+#     assigned_runway = np.ones(assigned_times.shape[0])
+#     zipped = np.column_stack([assigned_times, assigned_runway])
+#     pop.append(zipped)
 
-shaped_population = np.array(pop)
-population_shape = shaped_population.shape
-starting_population = shaped_population.flatten()
+# shaped_population = np.array(pop)
+# population_shape = shaped_population.shape
+# starting_population = shaped_population.flatten()
 
+assigned_times = np.random.uniform(early_times, late_times)
+assigned_runway = np.ones(assigned_times.shape[0])
+zipped = np.column_stack([assigned_times, assigned_runway])
+
+population_shape = zipped.shape
+starting_population = zipped.flatten()
 
 def draw_times(times):
     print("====================================================================")
@@ -125,13 +131,13 @@ class PlaneMutation(Mutation):
         self.prob = prob
 
     def _do(self, problem, X, **kwargs):
-        _planes = X.copy().reshape(population_shape)
+        _schedules = X.copy().reshape((-1, population_shape[0], population_shape[1]))
+        for _schedule in _schedules:
+            for idx, plane in enumerate(_schedule):
+                if random.random() < self.prob:
+                    plane[0] = random.uniform(early_times[idx], late_times[idx])
 
-        for idx, plane in enumerate(_planes):
-            if random.random() < self.prob:
-                plane[0] = random.uniform(early_times[idx], late_times[idx])
-
-        return _planes.reshape(X.shape)
+        return _schedules.reshape(X.shape)
 
 
 print("Initialising mutation...")
@@ -186,15 +192,15 @@ plane_algorithm = NSGA2(
 print("Initialising termination...")
 plane_termination = get_termination("n_gen", 1000)
 
-# # ====================================================== RUN MODEL
-# print("Minimising problem...")
-# res = minimize(problem=plane_problem,
-#                algorithm=plane_algorithm,
-#                termination=plane_termination,
-#                seed=1,
-#                save_history=True,
-#                verbose=False,
-#                callback=plane_callback)
+# ====================================================== RUN MODEL
+print("Minimising problem...")
+res = minimize(problem=plane_problem,
+               algorithm=plane_algorithm,
+               termination=plane_termination,
+               seed=1,
+               save_history=True,
+               verbose=False,
+               callback=plane_callback)
 
 # # =================================================== SHOW RESULTS
 # # ======================================= SHOW PENATLY PROGRESSION
