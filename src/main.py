@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from fpdf import FPDF
+from PIL import Image
 from pymoo.visualization.scatter import Scatter
 from pymoo.operators.crossover.pntx import TwoPointCrossover
 # from pymoo.operators.crossover.hux import HalfUniformCrossover
@@ -35,9 +36,6 @@ schedule = PlaneSchedule(filepath)
 
 print("Initialising population...")
 schedule.mutate(_prob=1.0)
-print("======================== Initial population ========================")
-schedule.draw_planes()
-print("====================================================================")
 
 print("Parsing decision variables for evolution...")
 ASSIGNED_TIMES = np.random.uniform(schedule.t_early(), schedule.t_late())
@@ -176,19 +174,51 @@ res = minimize(problem=plane_problem,
 # ========================================================= REPORT
 output_dir = f"{pathlib.Path(__file__).parent.parent.absolute()}/report/"
 
-# ========================================================= PARETO
-print("Generating Pareto front graph")
-plt.scatter(res.F[:,0], res.F[:,1], c ="blue")
-plt.title("Pareto front")
-plt.xlabel(r"$F_1$")
-plt.ylabel(r"$F_2$")
+# ============================================== STARTING SCHEDULE
+print("Drawing starting schedule...")
+fig = plt.figure()
+ax = fig.subplots()
+ax.imshow(schedule.draw_planes())
+plt.axis('off')
+plt.title("Starting schedule")
+plt.savefig(output_dir + "starting_schedule.png",
+           transparent=False,
+           facecolor='white',
+           bbox_inches="tight")
+        
+fig.clear()
 
-plt.savefig('./pareto_front.png',
+# ================================================== BEST SCHEDULE
+print("Drawing best schedule...")
+best = res.X[0].reshape(population_shape)[:, 0]
+
+fig = plt.figure()
+ax = fig.subplots()
+ax.imshow(schedule.draw_assigned_times(best))
+plt.axis('off')
+plt.title("Best schedule")
+plt.savefig(output_dir + "best_schedule.png",
            transparent=False,
            facecolor='white',
            bbox_inches="tight")
 
-# plt.show()
+fig.clear()
+
+# ========================================================= PARETO
+print("Generating 2D Pareto front...")
+fig = plt.figure()
+ax = fig.subplots()
+ax.scatter(res.F[:,0], res.F[:,1], c ="blue")
+plt.title("Pareto front")
+plt.xlabel(r"$F_1$")
+plt.ylabel(r"$F_2$")
+
+plt.savefig(output_dir + "pareto_front_2d.png",
+           transparent=False,
+           facecolor='white',
+           bbox_inches="tight")
+
+fig.clear()
 
 # ==================================== SHOW POPULATION PROGRESSION
 # print("Start population")
@@ -199,10 +229,19 @@ plt.savefig('./pareto_front.png',
 # schedule.draw_assigned_times(best)
 
 # =================================================== GENERATE PDF
+MARGIN = 10
+PAGE_WIDTH = 210 - 2*MARGIN
+HEADER_HEIGHT = 20
+TWO_COL_WIDTH = PAGE_WIDTH/2
+CELL_PADDING = 10
 
-margin = 10
-# Page width: Width of A4 is 210mm
-page_width = 210 - 2*margin
+SCHEDULES_START_Y = HEADER_HEIGHT + MARGIN + CELL_PADDING
+
+with Image.open(f"{output_dir + 'starting_schedule.png'}") as im:
+    SCHEDULE_HEIGHT = (im.size[1]/im.size[0])*TWO_COL_WIDTH
+
+PARETO_START_Y = SCHEDULES_START_Y + CELL_PADDING + SCHEDULE_HEIGHT
+
 # Cell height
 cell_height = 50
 pdf = FPDF()
@@ -212,14 +251,23 @@ pdf.set_font('Arial', '', 12)
 pdf.set_fill_color(r=0, g=0, b=0)
 pdf.set_text_color(r=255, g=255, b=255)
 pdf.cell(w=0,
-    h=20,
+    h=HEADER_HEIGHT,
     txt="Plane landing optimisation",
     ln=1,
     align = 'C',
     fill=True)
 
-pdf.image('./pareto_front.png', 
-          x = 10, y = None, w = 100, h = 0, type = 'PNG')
+
+# SCHEDULES
+pdf.image(output_dir + "starting_schedule.png",
+          x = MARGIN, y = SCHEDULES_START_Y, w = TWO_COL_WIDTH, h = 0, type = 'PNG')
+
+pdf.image(output_dir + "best_schedule.png",
+          x = MARGIN + TWO_COL_WIDTH, y = SCHEDULES_START_Y, w = TWO_COL_WIDTH, h = 0, type = 'PNG')
+
+# PARETO
+pdf.image(output_dir + "pareto_front_2d.png", 
+          x = 10, y = PARETO_START_Y, w = TWO_COL_WIDTH, h = 0, type = 'PNG')
 
 # pdf.cell(w=(pw/2), h=ch, txt="Cell 2a", border=1, ln=0)
 # pdf.cell(w=(pw/2), h=ch, txt="Cell 2b", border=1, ln=1)

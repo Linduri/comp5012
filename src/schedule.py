@@ -121,7 +121,7 @@ class PlaneSchedule():
         """
         temp = self.data().copy()
         temp[:, self.COLS["T_ASSIGNED"]] = _times
-        self.draw_planes(_data=temp)
+        return self.draw_planes(_data=temp)
 
     def draw_data(self):
         """
