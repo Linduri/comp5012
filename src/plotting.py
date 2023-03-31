@@ -10,6 +10,8 @@ class Plot:
     """
     def __init__(self):
         plt.rcParams["font.family"] = "Liberation Serif"
+        self.title_font = {'size':'16'}
+        self.label_font = {'size':'14'}
         # plt.rcParams["font.serif"] = "Serif"
 
 
@@ -25,7 +27,7 @@ class Plot:
         _ax = _fig.subplots()
         _ax.imshow(image)
         plt.axis('off')
-        plt.title(title)
+        plt.title(title, self.title_font)
 
         if save_dir:
             plt.savefig(save_dir + str(f"{title}.png").lower().replace(' ', '_'),
@@ -45,9 +47,9 @@ class Plot:
         _ax = _fig.subplots()
         self.__prep_graph__(_ax)
         _ax.scatter(_f1, _f2, c ="blue")
-        plt.title("Pareto front")
-        plt.xlabel(r"$F_1$")
-        plt.ylabel(r"$F_2$")
+        plt.title("Pareto front", self.title_font)
+        plt.xlabel(r"$F_1$", self.label_font)
+        plt.ylabel(r"$F_2$", self.label_font)
 
         if save_dir:
             plt.savefig(save_dir + "pareto_front_2d.png",
@@ -92,11 +94,11 @@ class Plot:
 
         _ax.invert_yaxis()
 
-        _ax.set_xlabel(r"$F_1$")
-        _ax.set_ylabel("Generation")
-        _ax.set_zlabel(r"$F_2$")
+        _ax.set_xlabel(r"$F_1$", self.label_font)
+        _ax.set_ylabel("Generation", self.label_font)
+        _ax.set_zlabel(r"$F_2$", self.label_font)
 
-        _ax.set_title("Normalised Pareto front over generations")
+        _ax.set_title("Normalised Pareto front over generations", self.title_font)
 
         if save_dir:
             plt.savefig(save_dir + "pareto_front_3d.png",
@@ -152,9 +154,9 @@ class Plot:
         _frame_size = np.array(reference_point)-_origin
         _hyper_volume = (_frame_size[0]*_frame_size[1]) - _area_under_the_curve
 
-        plt.title(f"Hyper-volume ({_hyper_volume})")
-        plt.xlabel(r"$F_1$")
-        plt.ylabel(r"$F_2$")
+        plt.title(f"Hyper-volume ({_hyper_volume})", self.title_font)
+        plt.xlabel(r"$F_1$", self.label_font)
+        plt.ylabel(r"$F_2$", self.label_font)
         
         if save_dir:
             plt.savefig(save_dir + "hypervolume.png",
