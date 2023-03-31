@@ -5,12 +5,9 @@ import pathlib
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 
 from fpdf import FPDF
 from PIL import Image
-from matplotlib import cm
-from pymoo.visualization.scatter import Scatter
 from pymoo.operators.crossover.pntx import TwoPointCrossover
 # from pymoo.operators.crossover.hux import HalfUniformCrossover
 from pymoo.core.problem import ElementwiseProblem
@@ -23,7 +20,6 @@ from schedule import PlaneSchedule
 
 # =============================================== HYPER PARAMETERS
 POPULATION_SIZE = 100
-OFFSPRING = 10
 GENERATIONS = 500
 
 # ====================================================== LOAD DATA
@@ -92,10 +88,10 @@ class PlaneMutation(Mutation):
         _schedules = X.copy().reshape(
             (-1, population_shape[0], population_shape[1]))
         for _schedule in _schedules:
-            for idx, plane in enumerate(_schedule):
+            for _idx, plane in enumerate(_schedule):
                 if random.random() < self.prob:
                     plane[0] = random.uniform(
-                        schedule.t_early()[idx], schedule.t_late()[idx])
+                        schedule.t_early()[_idx], schedule.t_late()[_idx])
 
         return _schedules.reshape(X.shape)
 
@@ -103,7 +99,7 @@ class PlaneMutation(Mutation):
 print("Initialising mutation...")
 plane_mutation = PlaneMutation()
 
-# # =================================== DEFINE THE ARCHIVE MECHANISM
+# =================================== DEFINE THE ARCHIVE MECHANISM
 class ArchiveCallback(Callback):
     """
     Record the history of the network evolution.
@@ -134,7 +130,6 @@ print("Initialising algorithm...")
 
 plane_algorithm = NSGA2(
     pop_size=POPULATION_SIZE,
-    # n_offsprings=OFFSPRING,
     sampling=starting_population,
     mutation=plane_mutation,
     crossover=TwoPointCrossover()
@@ -186,7 +181,7 @@ plt.savefig(output_dir + "starting_schedule.png",
            transparent=False,
            facecolor='white',
            bbox_inches="tight")
-        
+
 fig.clear()
 
 # ================================================== BEST SCHEDULE
@@ -221,17 +216,10 @@ plt.savefig(output_dir + "pareto_front_2d.png",
 
 fig.clear()
 
-# ====================================================== 3D PARETO
+# =========================================== NORMALISED 3D PARETO
 print("Generating 3D Pareto front...")
 #Ignore first entry as is single starting schedule
 pareto_history = np.array(res.algorithm.callback.data["F"][1:])
-
-# points = []
-# for idx, _generation in enumerate(pareto_history):
-#     for _member in _generation:
-#         points.append([_member[0], _member[1], idx])
-
-# verts = np.array(points)
 
 # Scale each pop score between zero and one
 points = []
@@ -239,12 +227,16 @@ for idx, _generation in enumerate(pareto_history):
     _norm_gen = _generation
 
     for col in range(_generation.shape[1]):
-        _norm_gen[:, col] = np.interp(_norm_gen[:, col], (_norm_gen[:, col].min(), _norm_gen[:, col].max()), (0, 1))
+        _norm_gen[:, col] = np.interp(_norm_gen[:, col],
+        (_norm_gen[:, col].min(), _norm_gen[:, col].max()), (0, 1))
 
     for _member in _norm_gen:
         points.append([_member[0], _member[1], idx])
 
 verts = np.array(points)
+
+# Remove double
+verts = np.unique(verts, axis=0)
 
 pareto_f1 = verts[:,0]
 pareto_f2 = verts[:,1]
@@ -252,24 +244,17 @@ pareto_generation = verts[:,2]
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
+ax.set_box_aspect(aspect=None, zoom=0.8)
 
-surf = ax.plot_trisurf(pareto_f1, pareto_generation, pareto_f2, cmap=cm.jet, linewidth=0)
-# fig.colorbar(surf)
+surf = ax.plot_trisurf(pareto_f1, pareto_generation, pareto_f2, linewidth=0)
 
 ax.invert_yaxis()
 
-# ax.set_zscale('log')
-# ax.set_xscale('log')
+ax.set_xlabel(r"$F_1$")
+ax.set_ylabel("Generation")
+ax.set_zlabel(r"$F_2$")
 
-ax.set_xlabel("x")
-ax.set_ylabel("y")
-ax.set_zlabel("z")
-
-# ax.xaxis.set_major_locator(MaxNLocator(5))
-# ax.yaxis.set_major_locator(MaxNLocator(6))
-# ax.zaxis.set_major_locator(MaxNLocator(5))
-
-fig.tight_layout()
+ax.set_title("Normalised Pareto front over generations")
 
 plt.savefig(output_dir + "pareto_front_3d.png",
            transparent=False,
@@ -278,14 +263,6 @@ plt.savefig(output_dir + "pareto_front_3d.png",
 
 fig.clear()
 
-# ==================================== SHOW POPULATION PROGRESSION
-# print("Start population")
-# schedule.draw_planes()
-
-# print("End population")
-# best = res.X[0].reshape(population_shape)[:, 0]
-# schedule.draw_assigned_times(best)
-
 # =================================================== GENERATE PDF
 MARGIN = 10
 PAGE_WIDTH = 210 - 2*MARGIN
@@ -293,15 +270,19 @@ HEADER_HEIGHT = 20
 TWO_COL_WIDTH = PAGE_WIDTH/2
 CELL_PADDING = 10
 
-SCHEDULES_START_Y = HEADER_HEIGHT + MARGIN + CELL_PADDING
+HYPERPARAMETERS_HEIGHT = 20
 
-with Image.open(f"{output_dir + 'starting_schedule.png'}") as im:
+HYPERPARAMETERS_START_Y = HEADER_HEIGHT + MARGIN + CELL_PADDING
+SCHEDULES_START_Y = HYPERPARAMETERS_START_Y + HYPERPARAMETERS_HEIGHT + CELL_PADDING
+
+with Image.open(f"{output_dir + 'best_schedule.png'}") as im:
     SCHEDULE_HEIGHT = (im.size[1]/im.size[0])*TWO_COL_WIDTH
+
+with Image.open(f"{output_dir + 'pareto_front_2d.png'}") as im:
+    PARETO_2D_HEIGHT = (im.size[1]/im.size[0])*TWO_COL_WIDTH
 
 PARETO_START_Y = SCHEDULES_START_Y + CELL_PADDING + SCHEDULE_HEIGHT
 
-# Cell height
-cell_height = 50
 pdf = FPDF()
 pdf.add_page()
 pdf.set_font('Arial', '', 12)
@@ -315,6 +296,18 @@ pdf.cell(w=0,
     align = 'C',
     fill=True)
 
+pdf.set_text_color(r=0, g=0, b=0)
+pdf.cell(w=(PAGE_WIDTH/2),
+    h=HYPERPARAMETERS_HEIGHT,
+    txt=f"POPULATION: {POPULATION_SIZE}",
+    align = 'C',
+    ln=0)
+
+pdf.cell(w=(PAGE_WIDTH/2),
+    h=HYPERPARAMETERS_HEIGHT,
+    txt=f"GENERATIONS: {GENERATIONS}",
+    align = 'C',
+    ln=0)
 
 # SCHEDULES
 pdf.image(output_dir + "starting_schedule.png",
@@ -327,8 +320,8 @@ pdf.image(output_dir + "best_schedule.png",
 pdf.image(output_dir + "pareto_front_2d.png",
           x = MARGIN, y = PARETO_START_Y, w = TWO_COL_WIDTH, h = 0, type = 'PNG')
 
-pdf.image(output_dir + "pareto_front_3d.png", 
-          x = MARGIN + TWO_COL_WIDTH, y = PARETO_START_Y, w = TWO_COL_WIDTH, h = 0, type = 'PNG')
+pdf.image(output_dir + "pareto_front_3d.png",
+          x = MARGIN + TWO_COL_WIDTH, y = PARETO_START_Y, w = 0, h = PARETO_2D_HEIGHT, type = 'PNG')
 
 # pdf.cell(w=(pw/2), h=ch, txt="Cell 2a", border=1, ln=0)
 # pdf.cell(w=(pw/2), h=ch, txt="Cell 2b", border=1, ln=1)
@@ -341,7 +334,5 @@ pdf.image(output_dir + "pareto_front_3d.png",
 # pdf.cell(w=0, h=ch, txt="Cell 5", border=1, ln=1)
 
 pdf.output(output_dir + "report.pdf", 'F')
-
-# pdf.output(f"{pathlib.Path(__file__).parent.parent.absolute()}/src/report.pdf", 'F')
 
 print("Done")
