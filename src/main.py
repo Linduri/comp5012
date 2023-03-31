@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from fpdf import FPDF
 from pymoo.visualization.scatter import Scatter
 from pymoo.operators.crossover.pntx import TwoPointCrossover
 # from pymoo.operators.crossover.hux import HalfUniformCrossover
@@ -21,7 +22,7 @@ from schedule import PlaneSchedule
 # =============================================== HYPER PARAMETERS
 POPULATION_SIZE = 100
 OFFSPRING = 10
-GENERATIONS = 500
+GENERATIONS = 100
 
 # ====================================================== LOAD DATA
 FILE_IDX = 1
@@ -173,16 +174,23 @@ res = minimize(problem=plane_problem,
 # plt.show()
 
 # ========================================================= PARETO
-print("Pareto")
-plt.scatter(res.F[:,0], res.F[:,1], c ="blue")
-plt.xlabel(r"$F_1$")
-plt.ylabel(r"$F_2$")
-plt.show()
+# print("Pareto")
+# plt.scatter(res.F[:,0], res.F[:,1], c ="blue")
+# plt.xlabel(r"$F_1$")
+# plt.ylabel(r"$F_2$")
+# plt.show()
 
-# # ==================================== SHOW POPULATION PROGRESSION
-print("Start population")
-schedule.draw_planes()
+# ==================================== SHOW POPULATION PROGRESSION
+# print("Start population")
+# schedule.draw_planes()
 
-print("End population")
-best = res.X[0].reshape(population_shape)[:, 0]
-schedule.draw_assigned_times(best)
+# print("End population")
+# best = res.X[0].reshape(population_shape)[:, 0]
+# schedule.draw_assigned_times(best)
+
+# ========================================================= REPORT
+pdf = FPDF()
+pdf.add_page()
+pdf.output(f"{pathlib.Path(__file__).parent.parent.absolute()}/src/report.pdf", 'F')
+
+print("Done")
