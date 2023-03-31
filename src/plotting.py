@@ -123,7 +123,8 @@ class Plot:
         _hyper_volume = (_frame_size[0]*_frame_size[1]) - _area_under_the_curve
 
         plt.title(f"Hyper-volume ({_hyper_volume})")
-
+        plt.xlabel(r"$F_1$")
+        plt.ylabel(r"$F_2$")
         
         if save_dir:
             plt.savefig(save_dir + "hypervolume.png",
