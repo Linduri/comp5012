@@ -8,6 +8,11 @@ class Plot:
     """
     Plot graphs
     """
+    def __init__(self):
+        plt.rcParams["font.family"] = "Liberation Serif"
+        # plt.rcParams["font.serif"] = "Serif"
+        plt.rcParams["axes.edgecolor"] = "white"
+        plt.rcParams["axes.facecolor"] = "e7e7e7"
 
     def pareto_front_2d(self, _f1, _f2, save_dir=None, show=True):
         """
