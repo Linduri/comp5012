@@ -173,11 +173,21 @@ res = minimize(problem=plane_problem,
 # plt.ylabel("Penalty (Negative is early, positive is late)")
 # plt.show()
 
+# ========================================================= REPORT
+output_dir = f"{pathlib.Path(__file__).parent.parent.absolute()}/report/"
+
 # ========================================================= PARETO
-# print("Pareto")
-# plt.scatter(res.F[:,0], res.F[:,1], c ="blue")
-# plt.xlabel(r"$F_1$")
-# plt.ylabel(r"$F_2$")
+print("Generating Pareto front graph")
+plt.scatter(res.F[:,0], res.F[:,1], c ="blue")
+plt.title("Pareto front")
+plt.xlabel(r"$F_1$")
+plt.ylabel(r"$F_2$")
+
+plt.savefig('./pareto_front.png',
+           transparent=False,
+           facecolor='white',
+           bbox_inches="tight")
+
 # plt.show()
 
 # ==================================== SHOW POPULATION PROGRESSION
@@ -188,9 +198,41 @@ res = minimize(problem=plane_problem,
 # best = res.X[0].reshape(population_shape)[:, 0]
 # schedule.draw_assigned_times(best)
 
-# ========================================================= REPORT
+# =================================================== GENERATE PDF
+
+margin = 10
+# Page width: Width of A4 is 210mm
+page_width = 210 - 2*margin
+# Cell height
+cell_height = 50
 pdf = FPDF()
 pdf.add_page()
-pdf.output(f"{pathlib.Path(__file__).parent.parent.absolute()}/src/report.pdf", 'F')
+pdf.set_font('Arial', '', 12)
+
+pdf.set_fill_color(r=0, g=0, b=0)
+pdf.set_text_color(r=255, g=255, b=255)
+pdf.cell(w=0,
+    h=20,
+    txt="Plane landing optimisation",
+    ln=1,
+    align = 'C',
+    fill=True)
+
+pdf.image('./pareto_front.png', 
+          x = 10, y = None, w = 100, h = 0, type = 'PNG')
+
+# pdf.cell(w=(pw/2), h=ch, txt="Cell 2a", border=1, ln=0)
+# pdf.cell(w=(pw/2), h=ch, txt="Cell 2b", border=1, ln=1)
+# pdf.cell(w=(pw/3), h=ch, txt="Cell 3a", border=1, ln=0)
+# pdf.cell(w=(pw/3), h=ch, txt="Cell 3b", border=1, ln=0)
+# pdf.cell(w=(pw/3), h=ch, txt="Cell 3c", border=1, ln=1)
+# pdf.cell(w=(pw/3), h=ch, txt="Cell 4a", border=1, ln=0)
+# pdf.cell(w=(pw/3)*2, h=ch, txt="Cell 4b", border=1, ln=1)
+# pdf.set_xy(x=10, y= 220) # or use pdf.ln(50)
+# pdf.cell(w=0, h=ch, txt="Cell 5", border=1, ln=1)
+
+pdf.output(output_dir + "report.pdf", 'F')
+
+# pdf.output(f"{pathlib.Path(__file__).parent.parent.absolute()}/src/report.pdf", 'F')
 
 print("Done")

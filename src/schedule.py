@@ -322,4 +322,4 @@ class PlaneSchedule():
             self.__draw_vert__(
                 image, plane[self.COLS["T_TARGET"]], idx, row_height, _gap_height, dotted=True)
 
-        image.show()
+        return image
