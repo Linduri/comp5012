@@ -263,6 +263,70 @@ plt.savefig(output_dir + "pareto_front_3d.png",
 
 fig.clear()
 
+# ==================================================== HYPERVOLUME
+# https://stackoverflow.com/questions/42692921/how-to-create-hypervolume-and-surface-attainment-plots-for-2-objectives-using
+def plot_hyper_volume(_F, reference_point):
+    print("Calculating hyper-volume...")
+    # Empty pareto set
+    pareto_set = np.full(_F.shape, np.inf)
+
+    i = 0
+    for point in _F:
+        if i == 0:
+            pareto_set[i] = point
+            i += 1
+        elif point[1] < pareto_set[:, 1].min():
+            pareto_set[i] = point
+            i += 1
+
+    # Get rid of unused spaces
+    pareto_set = pareto_set[:i + 1, :]
+
+    # Add reference point to the pareto set
+    pareto_set[i] = reference_point
+
+    # These points will define the path to be plotted and filled
+    x_path_of_points = []
+    y_path_of_points = []
+
+    for index, point in enumerate(pareto_set):
+
+        if index < i - 1:
+            plt.plot([point[0], point[0]], [point[1], pareto_set[index + 1][1]], marker='o', markersize=4, c='#4270b6',
+                     mfc='black', mec='black')
+            plt.plot([point[0], pareto_set[index + 1][0]], [pareto_set[index + 1][1], pareto_set[index + 1][1]],
+                     marker='o', markersize=4, c='#4270b6', mfc='black', mec='black')
+
+            x_path_of_points += [point[0], point[0], pareto_set[index + 1][0]]
+            y_path_of_points += [point[1], pareto_set[index + 1][1], pareto_set[index + 1][1]]
+
+    # Link 1 to Reference Point
+    plt.plot([pareto_set[0][0], reference_point[0]], [pareto_set[0][1], reference_point[1]], marker='o', markersize=4,
+             c='#4270b6', mfc='black', mec='black')
+    # Link 2 to Reference Point
+    plt.plot([pareto_set[-1][0], reference_point[0]], [pareto_set[-2][1], reference_point[1]], marker='o', markersize=4,
+             c='#4270b6', mfc='black', mec='black')
+    # Highlight the Reference Point
+    plt.plot(reference_point[0], reference_point[1], 'o', color='red', markersize=8)
+
+    # Fill the area between the Pareto set and Ref y
+    plt.fill_betweenx(y_path_of_points, x_path_of_points, max(x_path_of_points) * np.ones(len(x_path_of_points)),
+                      color='#dfeaff', alpha=1)
+
+    plt.xlabel(r"$f_{\mathrm{1}}(x)$")
+    plt.ylabel(r"$f_{\mathrm{2}}(x)$")
+    plt.title("Hyper-volume")
+
+    return plt
+
+refence_point = [res.F[:,0].max(), res.F[:,1].max()]
+plot_hyper_volume(res.F, refence_point).savefig(output_dir + "hypervolume.png",
+           transparent=False,
+           facecolor='white',
+           bbox_inches="tight")
+
+fig.clear()
+
 # =================================================== GENERATE PDF
 MARGIN = 10
 PAGE_WIDTH = 210 - 2*MARGIN
@@ -282,6 +346,7 @@ with Image.open(f"{output_dir + 'pareto_front_2d.png'}") as im:
     PARETO_2D_HEIGHT = (im.size[1]/im.size[0])*TWO_COL_WIDTH
 
 PARETO_START_Y = SCHEDULES_START_Y + CELL_PADDING + SCHEDULE_HEIGHT
+HYPERVOLUME_START_Y = PARETO_START_Y + CELL_PADDING + PARETO_2D_HEIGHT
 
 pdf = FPDF()
 pdf.add_page()
@@ -322,6 +387,9 @@ pdf.image(output_dir + "pareto_front_2d.png",
 
 pdf.image(output_dir + "pareto_front_3d.png",
           x = MARGIN + TWO_COL_WIDTH, y = PARETO_START_Y, w = 0, h = PARETO_2D_HEIGHT, type = 'PNG')
+
+pdf.image(output_dir + "hypervolume.png",
+          x = MARGIN, y = HYPERVOLUME_START_Y, w = TWO_COL_WIDTH, h = 0, type = 'PNG')
 
 # pdf.cell(w=(pw/2), h=ch, txt="Cell 2a", border=1, ln=0)
 # pdf.cell(w=(pw/2), h=ch, txt="Cell 2b", border=1, ln=1)
