@@ -33,7 +33,7 @@ schedule = PlaneSchedule(filepath)
 # ========================================== INITIALISE POPULATION
 
 print("Initialising population...")
-schedule.mutate(prob=1.0)
+schedule.mutate(_prob=1.0)
 print("======================== Initial population ========================")
 schedule.draw_planes()
 print("====================================================================")
@@ -134,7 +134,7 @@ print("Initialising algorithm...")
 
 plane_algorithm = NSGA2(
     pop_size=POPULATION_SIZE,
-    n_offsprings=OFFSPRING,
+    # n_offsprings=OFFSPRING,
     sampling=starting_population,
     mutation=plane_mutation,
     crossover=TwoPointCrossover()
@@ -156,18 +156,15 @@ res = minimize(problem=plane_problem,
 
 # # =================================================== SHOW RESULTS
 # # ======================================= SHOW PENATLY PROGRESSION
-# combined_early_and_late = [[-x[0]+x[1] for x in X]
-#                            for X in res.algorithm.callback.data["F"]]
+# scores = np.array(res.algorithm.callback.data["F"])
 
-# combined_early_and_late_df = pd.DataFrame(data=combined_early_and_late, columns=[
-#     f"plane_{i}" for i in range(len(combined_early_and_late[0]))])
+# print(res.algorithm.callback.data["F"])
 
-best_f = res.algorithm.callback.data["F_best"]
-best_f_df = pd.DataFrame(data=best_f, columns=["Best F"])
-plt.plot(best_f_df)
-plt.xlabel("Generation")
-plt.ylabel("Best F")
-plt.show()
+
+# combined_early_and_late = np.array([[-x[0]+x[1] for x in X]
+#                            for X in res.algorithm.callback.data["F"]])
+
+
 
 # print("Penalty evolution")
 # plt.plot(combined_early_and_late_df)
@@ -175,7 +172,12 @@ plt.show()
 # plt.ylabel("Penalty (Negative is early, positive is late)")
 # plt.show()
 
-Scatter().add(res.F).show()
+# ========================================================= PARETO
+print("Pareto")
+plt.scatter(res.F[:,0], res.F[:,1], c ="blue")
+plt.xlabel(r"$F_1$")
+plt.ylabel(r"$F_2$")
+plt.show()
 
 # # ==================================== SHOW POPULATION PROGRESSION
 print("Start population")
