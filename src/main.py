@@ -1,23 +1,21 @@
 """
 Schedules planes based on set criteria
 """
-from pymoo.visualization.scatter import Scatter
-from pymoo.operators.crossover.pntx import TwoPointCrossover
-from pymoo.operators.crossover.hux import HalfUniformCrossover
 import pathlib
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
+from pymoo.visualization.scatter import Scatter
+from pymoo.operators.crossover.pntx import TwoPointCrossover
+# from pymoo.operators.crossover.hux import HalfUniformCrossover
 from pymoo.core.problem import ElementwiseProblem
 from pymoo.algorithms.moo.nsga2 import NSGA2
+from pymoo.core.callback import Callback
 from pymoo.optimize import minimize
 from pymoo.core.mutation import Mutation
 from pymoo.termination import get_termination
-from pymoo.core.callback import Callback
-from PIL import Image, ImageDraw
-import pandas as pd
-
 from schedule import PlaneSchedule
 
 # =============================================== HYPER PARAMETERS
@@ -49,8 +47,6 @@ population_shape = zipped.shape
 starting_population = zipped.flatten()
 
 # ============================================= DEFINE THE PROBLEM
-
-
 class PlaneProblem(ElementwiseProblem):
     """
     Defines the plane problem
@@ -83,8 +79,6 @@ print("Initialising problem...")
 plane_problem = PlaneProblem(starting_population.shape[0])
 
 # ============================================ DEFINE THE MUTATION
-
-
 class PlaneMutation(Mutation):
     """
     Mutates each schedule
@@ -95,7 +89,6 @@ class PlaneMutation(Mutation):
         self.prob = prob
 
     def _do(self, problem, X, **kwargs):
-        global current_generation
         _schedules = X.copy().reshape(
             (-1, population_shape[0], population_shape[1]))
         for _schedule in _schedules:
@@ -111,8 +104,6 @@ print("Initialising mutation...")
 plane_mutation = PlaneMutation()
 
 # # =================================== DEFINE THE ARCHIVE MECHANISM
-
-
 class ArchiveCallback(Callback):
     """
     Record the history of the network evolution.
@@ -140,7 +131,6 @@ plane_callback = ArchiveCallback()
 
 # =============================================== DEFINE THE MODEL
 print("Initialising algorithm...")
-
 
 plane_algorithm = NSGA2(
     pop_size=POPULATION_SIZE,
