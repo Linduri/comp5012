@@ -1,6 +1,9 @@
 """
 Schedules planes based on set criteria
 """
+from pymoo.visualization.scatter import Scatter
+from pymoo.operators.crossover.pntx import TwoPointCrossover
+from pymoo.operators.crossover.hux import HalfUniformCrossover
 import pathlib
 import random
 import numpy as np
@@ -15,8 +18,12 @@ from pymoo.core.callback import Callback
 from PIL import Image, ImageDraw
 import pandas as pd
 
-from data_loader import load_data, init_population, COLS
 from schedule import PlaneSchedule
+
+# =============================================== HYPER PARAMETERS
+POPULATION_SIZE = 100
+OFFSPRING = 10
+GENERATIONS = 5000
 
 # ====================================================== LOAD DATA
 FILE_IDX = 1
@@ -33,21 +40,16 @@ print("======================== Initial population ========================")
 schedule.draw_planes()
 print("====================================================================")
 
-early_times = schedule.data()[:,schedule.COLS["T_EARLY"]]
-target_times = schedule.data()[:,schedule.COLS["T_TARGET"]]
-late_times = schedule.data()[:,schedule.COLS["T_LATE"]]
 
-pop_size = 100
-offspring = 10
-generations = 500
 n_planes = schedule.n_planes()
 
-assigned_times = np.random.uniform(early_times, late_times)
-assigned_runway = np.ones(assigned_times.shape[0])
-zipped = np.column_stack([assigned_times, assigned_runway])
+ASSIGNED_TIMES = np.random.uniform(schedule.t_early(), schedule.t_late())
+ASSIGNED_RUNWAY = np.ones(ASSIGNED_TIMES.shape[0])
+zipped = np.column_stack([ASSIGNED_TIMES, ASSIGNED_RUNWAY])
 
 population_shape = zipped.shape
 starting_population = zipped.flatten()
+
 
 def draw_times(times):
     print("====================================================================")
@@ -75,13 +77,13 @@ class PlaneProblem(ElementwiseProblem):
         _x = np.reshape(x, population_shape)
 
         # Evaluate plane ealry/lateness
-        t_delta = _x[:, 0] - target_times
+        t_delta = _x[:, 0] - schedule.t_target()
 
         early_score = np.sum(
-            np.where(t_delta < 0, t_delta*early_times, 0))
+            np.where(t_delta < 0, -t_delta*schedule.p_early(), 0))
 
         late_score = np.sum(
-            np.where(t_delta > 0, t_delta*late_times, 0))
+            np.where(t_delta > 0, t_delta*schedule.p_late(), 0))
 
         out["F"] = [early_score, late_score]
 #         # out["G"] =
@@ -91,23 +93,26 @@ print("Initialising problem...")
 plane_problem = PlaneProblem(starting_population.shape[0])
 
 # ============================================ DEFINE THE MUTATION
+
+
 class PlaneMutation(Mutation):
     """
     Mutates each schedule
     """
-    
 
-    def __init__(self, prob=0.2):
+    def __init__(self, prob=0.5):
         super().__init__()
         self.prob = prob
 
     def _do(self, problem, X, **kwargs):
         global current_generation
-        _schedules = X.copy().reshape((-1, population_shape[0], population_shape[1]))
+        _schedules = X.copy().reshape(
+            (-1, population_shape[0], population_shape[1]))
         for _schedule in _schedules:
             for idx, plane in enumerate(_schedule):
                 if random.random() < self.prob:
-                    plane[0] = random.uniform(early_times[idx], late_times[idx])      
+                    plane[0] = random.uniform(
+                        schedule.t_early()[idx], schedule.t_late()[idx])
 
         return _schedules.reshape(X.shape)
 
@@ -145,16 +150,19 @@ plane_callback = ArchiveCallback()
 
 # =============================================== DEFINE THE MODEL
 print("Initialising algorithm...")
+
+
 plane_algorithm = NSGA2(
-    pop_size=pop_size,
-    n_offsprings=offspring,
+    pop_size=POPULATION_SIZE,
+    n_offsprings=OFFSPRING,
     sampling=starting_population,
-    mutation=plane_mutation
+    mutation=plane_mutation,
+    crossover=TwoPointCrossover()
 )
 
 # =================================== DEFINE TERMINATION CONDITION
 print("Initialising termination...")
-plane_termination = get_termination("n_gen", generations)
+plane_termination = get_termination("n_gen", GENERATIONS)
 
 # ====================================================== RUN MODEL
 print("Minimising problem...")
@@ -187,7 +195,6 @@ plt.show()
 # plt.ylabel("Penalty (Negative is early, positive is late)")
 # plt.show()
 
-from pymoo.visualization.scatter import Scatter
 Scatter().add(res.F).show()
 
 # # ==================================== SHOW POPULATION PROGRESSION
@@ -195,5 +202,5 @@ print("Start population")
 schedule.draw_planes()
 
 print("End population")
-best = res.X[0].reshape(population_shape)[:,0]
+best = res.X[0].reshape(population_shape)[:, 0]
 draw_times(best)

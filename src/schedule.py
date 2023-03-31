@@ -56,6 +56,27 @@ class PlaneSchedule():
     def n_vars(self):
         return self.__n_vars
 
+    def t_appear(self):
+        return self.data()[:,self.COLS["T_APPEAR"]]
+    
+    def t_early(self):
+        return self.data()[:,self.COLS["T_EARLY"]]
+    
+    def t_target(self):
+        return self.data()[:,self.COLS["T_TARGET"]]
+    
+    def T_assigned(self):
+        return self.data()[:,self.COLS["T_ASSIGNED"]]
+    
+    def t_late(self):
+        return self.data()[:,self.COLS["T_LATE"]]
+    
+    def p_early(self):
+        return self.data()[:,self.COLS["P_EARLY"]]
+    
+    def p_late(self):
+        return self.data()[:,self.COLS["P_LATE"]]
+
     def data(self):
         """
         Get the raw data normalised between 0 and 1 as a numpy array.
