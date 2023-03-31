@@ -176,37 +176,13 @@ res = minimize(problem=plane_problem,
 # ========================================================= REPORT
 output_dir = f"{pathlib.Path(__file__).parent.parent.absolute()}/report/"
 
-# ============================================== STARTING SCHEDULE
+# =================================================== PLOT FIGURES
 print("Drawing starting schedule...")
-fig = plt.figure()
-ax = fig.subplots()
-ax.imshow(schedule.draw_planes())
-plt.axis('off')
-plt.title("Starting schedule")
-plt.savefig(output_dir + "starting_schedule.png",
-            transparent=False,
-            facecolor='white',
-            bbox_inches="tight")
+Plot().image(schedule.draw_planes(), "Starting schedule", save_dir=output_dir, show=False)
 
-fig.clear()
-
-# ================================================== BEST SCHEDULE
 print("Drawing best schedule...")
 best = res.X[0].reshape(population_shape)[:, 0]
-
-fig = plt.figure()
-ax = fig.subplots()
-ax.imshow(schedule.draw_assigned_times(best))
-plt.axis('off')
-plt.title("Best schedule")
-plt.savefig(output_dir + "best_schedule.png",
-            transparent=False,
-            facecolor='white',
-            bbox_inches="tight")
-
-fig.clear()
-
-# ====================================================== 2D PARETO
+Plot().image(schedule.draw_assigned_times(best), "Best schedule", save_dir=output_dir, show=False)
 
 Plot().pareto_front_2d(res.F[:, 0], res.F[:, 1],
                        save_dir=output_dir, show=False)

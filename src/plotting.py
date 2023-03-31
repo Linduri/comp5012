@@ -20,6 +20,22 @@ class Plot:
         plt.setp(_ax.spines.values(), color="white")
         _ax.set_facecolor("#e7e7e7")
 
+    def image(self, image, title, save_dir=None, show=True):
+        _fig = plt.figure()
+        _ax = _fig.subplots()
+        _ax.imshow(image)
+        plt.axis('off')
+        plt.title(title)
+
+        if save_dir:
+            plt.savefig(save_dir + str(f"{title}.png").lower().replace(' ', '_'),
+                    transparent=False,
+                    facecolor='white',
+                    bbox_inches="tight")
+
+        if show:
+            plt.show()
+
     def pareto_front_2d(self, _f1, _f2, save_dir=None, show=True):
         """
         Plot a 2D pareto front.
