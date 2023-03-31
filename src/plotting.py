@@ -11,8 +11,14 @@ class Plot:
     def __init__(self):
         plt.rcParams["font.family"] = "Liberation Serif"
         # plt.rcParams["font.serif"] = "Serif"
-        plt.rcParams["axes.edgecolor"] = "white"
-        plt.rcParams["axes.facecolor"] = "e7e7e7"
+
+
+    def __prep_graph__(self, _ax):
+        _ax.minorticks_on()
+        _ax.grid(color='white', ls = '-', lw = 2, which='major', alpha=0.5)
+        _ax.grid(color='white', ls = 'dotted', lw = 1, which='minor', alpha=1)
+        plt.setp(_ax.spines.values(), color="white")
+        _ax.set_facecolor("#e7e7e7")
 
     def pareto_front_2d(self, _f1, _f2, save_dir=None, show=True):
         """
@@ -21,6 +27,7 @@ class Plot:
         print("Plotting 2D Pareto front...")
         _fig = plt.figure()
         _ax = _fig.subplots()
+        self.__prep_graph__(_ax)
         _ax.scatter(_f1, _f2, c ="blue")
         plt.title("Pareto front")
         plt.xlabel(r"$F_1$")
@@ -94,6 +101,8 @@ class Plot:
         _f = _f[_f[:, 0].argsort()]
 
         _fig = plt.figure()
+        _ax = _fig.subplots()
+        self.__prep_graph__(_ax)
 
 
         # Plot points

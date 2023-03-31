@@ -208,12 +208,10 @@ fig.clear()
 
 # ====================================================== 2D PARETO
 
-
 Plot().pareto_front_2d(res.F[:, 0], res.F[:, 1],
                        save_dir=output_dir, show=False)
-# Plot().normalised_pareto_front_3d(
-#     res.algorithm.callback.data["F"][1:], save_dir=output_dir, show=False)
-# print(res.F.shape)
+Plot().normalised_pareto_front_3d(
+    res.algorithm.callback.data["F"][1:], save_dir=output_dir, show=False)
 Plot().hyper_volume_2d(res.F, save_dir=output_dir, show=False)
 
 # =================================================== GENERATE PDF
