@@ -9,6 +9,7 @@ import pandas as pd
 
 from fpdf import FPDF
 from PIL import Image
+from matplotlib import cm
 from pymoo.visualization.scatter import Scatter
 from pymoo.operators.crossover.pntx import TwoPointCrossover
 # from pymoo.operators.crossover.hux import HalfUniformCrossover
@@ -23,7 +24,7 @@ from schedule import PlaneSchedule
 # =============================================== HYPER PARAMETERS
 POPULATION_SIZE = 100
 OFFSPRING = 10
-GENERATIONS = 100
+GENERATIONS = 500
 
 # ====================================================== LOAD DATA
 FILE_IDX = 1
@@ -204,7 +205,7 @@ plt.savefig(output_dir + "best_schedule.png",
 
 fig.clear()
 
-# ========================================================= PARETO
+# ====================================================== 2D PARETO
 print("Generating 2D Pareto front...")
 fig = plt.figure()
 ax = fig.subplots()
@@ -214,6 +215,63 @@ plt.xlabel(r"$F_1$")
 plt.ylabel(r"$F_2$")
 
 plt.savefig(output_dir + "pareto_front_2d.png",
+           transparent=False,
+           facecolor='white',
+           bbox_inches="tight")
+
+fig.clear()
+
+# ====================================================== 3D PARETO
+print("Generating 3D Pareto front...")
+#Ignore first entry as is single starting schedule
+pareto_history = np.array(res.algorithm.callback.data["F"][1:])
+
+# points = []
+# for idx, _generation in enumerate(pareto_history):
+#     for _member in _generation:
+#         points.append([_member[0], _member[1], idx])
+
+# verts = np.array(points)
+
+# Scale each pop score between zero and one
+points = []
+for idx, _generation in enumerate(pareto_history):
+    _norm_gen = _generation
+
+    for col in range(_generation.shape[1]):
+        _norm_gen[:, col] = np.interp(_norm_gen[:, col], (_norm_gen[:, col].min(), _norm_gen[:, col].max()), (0, 1))
+
+    for _member in _norm_gen:
+        points.append([_member[0], _member[1], idx])
+
+verts = np.array(points)
+
+pareto_f1 = verts[:,0]
+pareto_f2 = verts[:,1]
+pareto_generation = verts[:,2]
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+surf = ax.plot_trisurf(pareto_f1, pareto_generation, pareto_f2, cmap=cm.jet, linewidth=0)
+# fig.colorbar(surf)
+
+ax.invert_yaxis()
+
+# ax.set_zscale('log')
+# ax.set_xscale('log')
+
+ax.set_xlabel("x")
+ax.set_ylabel("y")
+ax.set_zlabel("z")
+
+# ax.xaxis.set_major_locator(MaxNLocator(5))
+# ax.yaxis.set_major_locator(MaxNLocator(6))
+# ax.zaxis.set_major_locator(MaxNLocator(5))
+
+fig.tight_layout()
+
+plt.savefig(output_dir + "pareto_front_3d.png",
            transparent=False,
            facecolor='white',
            bbox_inches="tight")
@@ -266,8 +324,11 @@ pdf.image(output_dir + "best_schedule.png",
           x = MARGIN + TWO_COL_WIDTH, y = SCHEDULES_START_Y, w = TWO_COL_WIDTH, h = 0, type = 'PNG')
 
 # PARETO
-pdf.image(output_dir + "pareto_front_2d.png", 
-          x = 10, y = PARETO_START_Y, w = TWO_COL_WIDTH, h = 0, type = 'PNG')
+pdf.image(output_dir + "pareto_front_2d.png",
+          x = MARGIN, y = PARETO_START_Y, w = TWO_COL_WIDTH, h = 0, type = 'PNG')
+
+pdf.image(output_dir + "pareto_front_3d.png", 
+          x = MARGIN + TWO_COL_WIDTH, y = PARETO_START_Y, w = TWO_COL_WIDTH, h = 0, type = 'PNG')
 
 # pdf.cell(w=(pw/2), h=ch, txt="Cell 2a", border=1, ln=0)
 # pdf.cell(w=(pw/2), h=ch, txt="Cell 2b", border=1, ln=1)
