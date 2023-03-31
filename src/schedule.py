@@ -82,6 +82,11 @@ class PlaneSchedule():
         Get the raw data normalised between 0 and 1 as a numpy array.
         """
         return self.__norm_data
+    
+    def draw_assigned_times(self, times):
+        temp = self.data().copy()
+        temp[:, self.COLS["T_ASSIGNED"]] = times
+        self.draw_planes(data=temp)
 
     def draw_data(self):
         """

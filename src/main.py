@@ -23,7 +23,7 @@ from schedule import PlaneSchedule
 # =============================================== HYPER PARAMETERS
 POPULATION_SIZE = 100
 OFFSPRING = 10
-GENERATIONS = 5000
+GENERATIONS = 500
 
 # ====================================================== LOAD DATA
 FILE_IDX = 1
@@ -40,23 +40,13 @@ print("======================== Initial population ========================")
 schedule.draw_planes()
 print("====================================================================")
 
-
-n_planes = schedule.n_planes()
-
+print("Parsing decision variables for evolution...")
 ASSIGNED_TIMES = np.random.uniform(schedule.t_early(), schedule.t_late())
 ASSIGNED_RUNWAY = np.ones(ASSIGNED_TIMES.shape[0])
 zipped = np.column_stack([ASSIGNED_TIMES, ASSIGNED_RUNWAY])
 
 population_shape = zipped.shape
 starting_population = zipped.flatten()
-
-
-def draw_times(times):
-    print("====================================================================")
-    temp = schedule.data().copy()
-    temp[:, PlaneSchedule.COLS["T_ASSIGNED"]] = times
-    schedule.draw_planes(data=temp)
-    print("====================================================================")
 
 # ============================================= DEFINE THE PROBLEM
 
@@ -203,4 +193,4 @@ schedule.draw_planes()
 
 print("End population")
 best = res.X[0].reshape(population_shape)[:, 0]
-draw_times(best)
+schedule.draw_assigned_times(best)
