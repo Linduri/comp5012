@@ -4,10 +4,7 @@ Schedules planes based on set criteria
 import pathlib
 import random
 import numpy as np
-import matplotlib.pyplot as plt
 
-from plotting import Plot
-from fpdf import FPDF
 from PIL import Image
 from pymoo.operators.crossover.pntx import TwoPointCrossover
 # from pymoo.operators.crossover.hux import HalfUniformCrossover
@@ -17,11 +14,13 @@ from pymoo.core.callback import Callback
 from pymoo.optimize import minimize
 from pymoo.core.mutation import Mutation
 from pymoo.termination import get_termination
+from fpdf import FPDF
+from plotting import Plot
 from schedule import PlaneSchedule
 
 # =============================================== HYPER PARAMETERS
-POPULATION_SIZE = 100
-GENERATIONS = 200
+POPULATION_SIZE = 500
+GENERATIONS = 500
 
 # ====================================================== LOAD DATA
 FILE_IDX = 1
@@ -44,8 +43,6 @@ population_shape = zipped.shape
 starting_population = zipped.flatten()
 
 # ============================================= DEFINE THE PROBLEM
-
-
 class PlaneProblem(ElementwiseProblem):
     """
     Defines the plane problem
@@ -84,7 +81,6 @@ class PlaneMutation(Mutation):
     """
     Mutates each schedule
     """
-
     def __init__(self, prob=0.5):
         super().__init__()
         self.prob = prob
@@ -111,14 +107,18 @@ class ArchiveCallback(Callback):
     """
     Record the history of the network evolution.
     """
+    _generation = 0
+    _n_generations = 0
+    _last_percent = 0
 
-    def __init__(self) -> None:
+    def __init__(self, _n_generations) -> None:
         super().__init__()
         self.n_evals = []
         self.opt = []
         self.data["F"] = []
         self.data["population"] = []
         self.data["F_best"] = []
+        self._n_generations = _n_generations
 
     def notify(self, algorithm):
         self.n_evals.append(algorithm.evaluator.n_eval)
@@ -128,9 +128,14 @@ class ArchiveCallback(Callback):
         self.data["F_best"].append(latest_f.min())
         self.data["population"].append(algorithm.pop.get("x"))
 
+        self._generation += 1
+        _new_percent = int(100*(self._generation/self._n_generations))
+        if _new_percent != self._last_percent:
+            print(f"\r{self._generation}/{self._n_generations} [{_new_percent}%]", end="")
+            self._last_percent = _new_percent
 
 print("Initialising archive...")
-plane_callback = ArchiveCallback()
+plane_callback = ArchiveCallback(GENERATIONS)
 
 # =============================================== DEFINE THE MODEL
 print("Initialising algorithm...")
@@ -155,6 +160,7 @@ res = minimize(problem=plane_problem,
                save_history=True,
                verbose=False,
                callback=plane_callback)
+print()
 
 # # =================================================== SHOW RESULTS
 # # ======================================= SHOW PENATLY PROGRESSION

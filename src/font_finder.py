@@ -1,3 +1,7 @@
+"""
+Identify what fonts matplotlib can use
+"""
+
 import matplotlib.font_manager
 fpaths = matplotlib.font_manager.findSystemFonts()
 
