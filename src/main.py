@@ -36,25 +36,8 @@ GENERATIONS = 200
 
 solver = PlaneOptimiser(starting_population, schedule, POP_SIZE, GENERATIONS, TwoPointCrossover())
 
-
+# ================================================== RUN OPTIMISER
 res = solver.run()
-
-# # =================================================== SHOW RESULTS
-# # ======================================= SHOW PENATLY PROGRESSION
-# scores = np.array(res.algorithm.callback.data["F"])
-
-# print(res.algorithm.callback.data["F"])
-
-
-# combined_early_and_late = np.array([[-x[0]+x[1] for x in X]
-#                            for X in res.algorithm.callback.data["F"]])
-
-
-# print("Penalty evolution")
-# plt.plot(combined_early_and_late_df)
-# plt.xlabel("Generation")
-# plt.ylabel("Penalty (Negative is early, positive is late)")
-# plt.show()
 
 # ========================================================= REPORT
 output_dir = f"{pathlib.Path(__file__).parent.parent.absolute()}/report/"
@@ -64,7 +47,7 @@ print("Drawing starting schedule...")
 Plot().image(schedule.draw_planes(), "Starting schedule", save_dir=output_dir, show=False)
 
 print("Drawing best schedule...")
-best = res.X[0].reshape(population_shape)[:, 0]
+best = res.X[0].reshape(starting_population.shape)[:, 0]
 Plot().image(schedule.draw_assigned_times(best), "Best schedule", save_dir=output_dir, show=False)
 
 Plot().pareto_front_2d(res.F[:, 0], res.F[:, 1],
