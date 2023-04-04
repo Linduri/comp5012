@@ -1,6 +1,10 @@
 """
 Schedules planes based on set criteria
 """
+
+
+
+#marek was here 
 import pathlib
 import random
 import numpy as np
