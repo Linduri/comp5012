@@ -18,23 +18,27 @@ FILE_IDX = 1
 filepath = f"{pathlib.Path(__file__).parent.parent.absolute()}/data/airland{FILE_IDX}.txt"
 
 print("Loading plane data...")
-schedule = PlaneSchedule(filepath)
+plane_parameters = PlaneSchedule(filepath)
 
 # ========================================== INITIALISE POPULATION
 
 print("Initialising population...")
-schedule.mutate(_prob=1.0)
+plane_parameters.mutate(_prob=1.0)
 
 print("Parsing decision variables for evolution...")
-ASSIGNED_TIMES = np.random.uniform(schedule.t_early(), schedule.t_late())
+ASSIGNED_TIMES = np.random.uniform(plane_parameters.t_early(), plane_parameters.t_late())
 ASSIGNED_RUNWAY = np.ones(ASSIGNED_TIMES.shape[0])
 starting_population = np.column_stack([ASSIGNED_TIMES, ASSIGNED_RUNWAY])
 
 # =============================================== DEFINE OPTIMISER
-POP_SIZE = 200
-GENERATIONS = 200
+POP_SIZE = 100
+GENERATIONS = 2000
 
-solver = PlaneOptimiser(starting_population, schedule, POP_SIZE, GENERATIONS, TwoPointCrossover())
+solver = PlaneOptimiser(starting_population,
+                        plane_parameters,
+                        POP_SIZE,
+                        GENERATIONS,
+                        TwoPointCrossover())
 
 # ================================================== RUN OPTIMISER
 res = solver.run()
@@ -44,11 +48,14 @@ output_dir = f"{pathlib.Path(__file__).parent.parent.absolute()}/report/"
 
 # =================================================== PLOT FIGURES
 print("Drawing starting schedule...")
-Plot().image(schedule.draw_planes(), "Starting schedule", save_dir=output_dir, show=False)
+Plot().image(plane_parameters.draw_planes(), "Starting schedule", save_dir=output_dir, show=False)
 
 print("Drawing best schedule...")
 best = res.X[0].reshape(starting_population.shape)[:, 0]
-Plot().image(schedule.draw_assigned_times(best), "Best schedule", save_dir=output_dir, show=False)
+Plot().image(plane_parameters.draw_assigned_times(best),
+             "Best schedule",
+             save_dir=output_dir,
+             show=False)
 
 Plot().pareto_front_2d(res.F[:, 0], res.F[:, 1],
                     save_dir=output_dir, show=False)
