@@ -106,7 +106,7 @@ class PlaneCallback(Callback):
             self._last_percent = _new_percent
 
 
-class PlaneSolver:
+class PlaneOptimiser:
     """
     An NSGA model to optimise plane landing schedules
     """

@@ -2,22 +2,15 @@
 Schedules planes based on set criteria
 """
 import pathlib
-import random
 import numpy as np
 
 from PIL import Image
 from pymoo.operators.crossover.pntx import TwoPointCrossover
-# from pymoo.operators.crossover.hux import HalfUniformCrossover
-from pymoo.core.problem import ElementwiseProblem
-from pymoo.algorithms.moo.nsga2 import NSGA2
-from pymoo.core.callback import Callback
-from pymoo.optimize import minimize
-from pymoo.core.mutation import Mutation
-from pymoo.termination import get_termination
+
 from fpdf import FPDF
 from plotting import Plot
 from schedule import PlaneSchedule
-from plane_solver import PlaneSolver
+from plane_optimiser import PlaneOptimiser
 
 
 # ====================================================== LOAD DATA
@@ -35,15 +28,15 @@ schedule.mutate(_prob=1.0)
 print("Parsing decision variables for evolution...")
 ASSIGNED_TIMES = np.random.uniform(schedule.t_early(), schedule.t_late())
 ASSIGNED_RUNWAY = np.ones(ASSIGNED_TIMES.shape[0])
-zipped = np.column_stack([ASSIGNED_TIMES, ASSIGNED_RUNWAY])
+starting_population = np.column_stack([ASSIGNED_TIMES, ASSIGNED_RUNWAY])
 
-population_shape = zipped.shape
-# starting_population = zipped.flatten()
-
+# =============================================== DEFINE OPTIMISER
 POP_SIZE = 200
 GENERATIONS = 200
 
-solver = PlaneSolver(zipped, schedule, POP_SIZE, GENERATIONS, TwoPointCrossover())
+solver = PlaneOptimiser(starting_population, schedule, POP_SIZE, GENERATIONS, TwoPointCrossover())
+
+
 res = solver.run()
 
 # # =================================================== SHOW RESULTS
