@@ -3,8 +3,9 @@ Load and parse plane data from a .txt file to a numpy array with additional metr
 """
 import re
 import logging
-import numpy as np
 import random
+import numpy as np
+
 from PIL import Image, ImageDraw
 
 
@@ -14,12 +15,12 @@ class PlaneSchedule():
     """
     logger = logging.getLogger(__name__)
 
-    __n_planes = None
-    __n_vars = None
-    __t_freeze = None
-    __raw_data = None
-    __norm_data = None
-    __draw_data = None
+    _n_planes = None
+    _n_vars = None
+    _t_freeze = None
+    _raw_data = None
+    _norm_data = None
+    _draw_data = None
 
     COLS = {
         "T_APPEAR": 0,
@@ -31,9 +32,9 @@ class PlaneSchedule():
         "P_LATE": 6
     }
 
-    def __init__(self, filepath):
-        self.__n_planes, self.__t_freeze, self.__raw_data = self.__load_raw__(
-            filepath)
+    def __init__(self, _filepath):
+        self._n_planes, self._t_freeze, self._raw_data = self.__load_raw__(
+            _filepath)
 
         try:
             self.__normalise_data__()
@@ -45,16 +46,67 @@ class PlaneSchedule():
         """
         Get the raw data loaded from file as a numpy array.
         """
-        return self.__raw_data
+        return self._raw_data
 
     def n_planes(self):
         """
         Get the number of planes in this schedule.
         """
-        return self.__n_planes
+        return self._n_planes
 
     def n_vars(self):
-        return self.__n_vars
+        """
+        Retrieve the scalar number of decision variables per plane.
+        """
+        return self._n_vars
+
+    def t_freeze(self):
+        """
+        Retrieve the scalar time within which to freeze a plane.
+        """
+        return self._t_freeze
+
+    def t_appear(self):
+        """
+        Retreive the appearance times of each plane as a 1D array.
+        """
+        return self.data()[:, self.COLS["T_APPEAR"]]
+
+    def t_early(self):
+        """
+        Retreive the earliest landing times of each plane as a 1D array.
+        """
+        return self.data()[:, self.COLS["T_EARLY"]]
+
+    def t_target(self):
+        """
+        Retreive the target landing times of each plane as a 1D array.
+        """
+        return self.data()[:, self.COLS["T_TARGET"]]
+
+    def t_assigned(self):
+        """
+        Retreive the assigned landing times of each plane as a 1D array.
+        """
+        return self.data()[:, self.COLS["T_ASSIGNED"]]
+
+    def t_late(self):
+        """
+        Retreive the latest landing times of each plane as a 1D array.
+        """
+        return self.data()[:, self.COLS["T_LATE"]]
+
+    def p_early(self):
+        """
+        Retreive the early landing penalty for each plane as a 1D array.
+        """
+        return self.data()[:, self.COLS["P_EARLY"]]
+
+    def p_late(self):
+        """
+        Retreive the late landing penalty for each plane as a 1D array.
+        """
+        return self.data()[:, self.COLS["P_LATE"]]
 
     def data(self):
         """
@@ -62,28 +114,37 @@ class PlaneSchedule():
         """
         return self.__norm_data
 
+    def draw_assigned_times(self, _times):
+        """
+        Draw a plane schedule given new landing times and the early and 
+        late times for this schuedle.
+        """
+        temp = self.data().copy()
+        temp[:, self.COLS["T_ASSIGNED"]] = _times
+        return self.draw_planes(_data=temp)
+
     def draw_data(self):
         """
         Get the draw data of the normalised data.
         """
-        return self.__draw_data
+        return self.draw_data
 
-    def __split_terms__(self, line):
+    def __split_terms__(self, _line):
         """
         Split a line of numbers into a list of floats
         """
-        if line is None:
+        if _line is None:
             return None
         else:
-            nums = re.split(r"\s+", line.strip())
+            nums = re.split(r"\s+", _line.strip())
             return [float(num) for num in nums]
 
-    def __load_raw__(self, path):
+    def __load_raw__(self, _path):
         """
-        Load and parse plane data from a .txt file to a numpy array with additional metrics and 
-        randomised assigned landing time.
+        Load and parse plane data from a .txt file to a numpy array with 
+        additional metrics and randomised assigned landing time.
         """
-        with open(path, 'r', encoding="utf-8") as file:
+        with open(_path, 'r', encoding="utf-8") as file:
 
             # Get the plane count and freeze time from the first line.
             next_line = file.readline()
@@ -135,10 +196,13 @@ class PlaneSchedule():
         return n_planes, t_freeze, data
 
     def __normalise_data__(self):
-        if self.__raw_data is None:
+        """
+        Map all plane variables to between 0 and 1.
+        """
+        if self._raw_data is None:
             raise ValueError("No raw data is loaded to normalise")
 
-        self.__norm_data = self.__raw_data.copy()
+        self.__norm_data = self._raw_data.copy()
 
         # Time features should be normalised to the same scale
         # across all time features not per time feature,
@@ -163,103 +227,88 @@ class PlaneSchedule():
         # Interval should remain in the same scale across all interval columns.
         i_min = 0
         i_max = max([upper_bounds[len(self.COLS) + i]
-                    for i in range(self.__n_planes)])
+                    for i in range(self._n_planes)])
 
-        for i in range(self.__n_planes):
+        for i in range(self._n_planes):
             self.__norm_data[:, len(self.COLS) + i] = np.interp(
                 self.__norm_data[:, len(self.COLS) + i], (i_min, i_max), (0, 1))
 
-    def __generate_draw_data__(self, data, width):
-        # if self.__norm_data is None:
-        #     raise ValueError("No normalised data is loaded to normalise")
+    def __generate_draw_data__(self, _data, _width):
+        """
+        Generate pixel coordianates for each variable.
+        """
+        return (_data.copy() * (_width - 1)).astype(int)
 
-        return (data.copy() * (width - 1)).astype(int)
-
-    def __draw_vert__(self, image, x, row, row_height, gap_height, dotted=False):
-        for j in range(row_height-2*gap_height):
+    def __draw_vert__(self, image, _x, _row, _row_height, _gap_height, dotted=False):
+        """
+        Draw a vertical line.
+        """
+        for j in range(_row_height-2*_gap_height):
             if dotted:
                 col = (0, 0, 0) if j % 2 == 0 else (255, 255, 255)
             else:
                 col = (0, 0, 0)
 
-            image.putpixel((x, (row*row_height)+gap_height+j), col)
+            image.putpixel((_x, (_row*_row_height)+_gap_height+j), col)
 
-    def __draw_hori__(self, image, x, y, length):
-        for j in range(length):
-            image.putpixel((x+j, y), (0, 0, 0))
+    def __draw_hori__(self, image, _x, _y, _length):
+        """
+        Draw a horizontal line.
+        """
+        for j in range(_length):
+            image.putpixel((_x+j, _y), (0, 0, 0))
 
-    def mutate(self, prob=1.0, data=None):
+    def mutate(self, _prob=1.0, _data=None):
         """
         Randomly mutate the schedule
         """
-        plane_data = self.__norm_data if data is None else data
+        plane_data = self.__norm_data if _data is None else _data
 
         for plane in plane_data:
-            if random.random() < prob:
+            if random.random() < _prob:
                 rand = np.random.uniform(
                     plane[self.COLS["T_EARLY"]], plane[self.COLS["T_LATE"]])
                 plane[self.COLS["T_ASSIGNED"]] = rand
 
         return plane_data
 
-    def evaluate(self, data=None):
-        """
-        Evaluate how good a given schedule is.
-        """
-        plane_data = self.__norm_data if data is None else data
-
-        t_delta = plane_data[:, self.COLS["T_ASSIGNED"]] - \
-            plane_data[:, self.COLS["T_TARGET"]]
-        early_score = np.sum(
-            np.where(t_delta < 0, t_delta*plane_data[:, self.COLS["P_EARLY"]], 0))
-        late_score = np.sum(
-            np.where(t_delta > 0, t_delta*plane_data[:, self.COLS["P_LATE"]], 0))
-
-        # Check all planes are within the landing window.
-        constraint_not_early = np.where(plane_data[:, self.COLS["T_ASSIGNED"]] >= plane_data[:, self.COLS["T_EARLY"]], 1, 0)
-        constraint_not_late = np.where(plane_data[:, self.COLS["T_ASSIGNED"]] <= plane_data[:, self.COLS["T_LATE"]], 1, 0)
-        constraint_within_landing_window = constraint_not_late * constraint_not_early
-        constraint_all_planes_within_landing_window = np.any(constraint_within_landing_window)
-
-        return [[early_score, late_score], [constraint_all_planes_within_landing_window]]
-
-    def draw_planes(self, width=512, data=None, pixel_height=20, gap_height=3):
+    def draw_planes(self, _width=512, _data=None, _pixel_height=20, _gap_height=3):
         """
         Draw plane event times for easier analysis of the data.
         """
 
-        if data is None:
-            plane_data = self.__generate_draw_data__(self.__norm_data, width)
+        if _data is None:
+            plane_data = self.__generate_draw_data__(self.__norm_data, _width)
         else:
-            plane_data = self.__generate_draw_data__(data, width)
+            plane_data = self.__generate_draw_data__(_data, _width)
 
-        row_height = pixel_height+gap_height
-        bar_height = pixel_height-gap_height
+        row_height = _pixel_height+_gap_height
+        bar_height = _pixel_height-_gap_height
 
-        image = Image.new('RGB', (width, self.__norm_data.shape[0]*row_height))
+        image = Image.new('RGB', (_width, self.__norm_data.shape[0]*row_height))
         ImageDraw.floodfill(image, xy=(0, 0), value=(255, 255, 255))
 
         for idx, plane in enumerate(plane_data):
             # Draw appearance time
             self.__draw_vert__(
-                image, plane[self.COLS["T_APPEAR"]], idx, row_height, gap_height)
+                image, plane[self.COLS["T_APPEAR"]], idx, row_height, _gap_height)
 
             # Draw appearnce time whisker
             whisker_length = plane[self.COLS["T_EARLY"]
                                    ] - plane[self.COLS["T_APPEAR"]]
             self.__draw_hori__(image, plane[self.COLS["T_APPEAR"]], (
-                idx*row_height)+int((pixel_height+gap_height)/2), whisker_length)
+                idx*row_height)+int(row_height/2), whisker_length)
 
             # Draw left (early) and right (late) lines
             self.__draw_vert__(
-                image, plane[self.COLS["T_EARLY"]], idx, row_height, gap_height)
+                image, plane[self.COLS["T_EARLY"]], idx, row_height, _gap_height)
             self.__draw_vert__(
-                image, plane[self.COLS["T_LATE"]], idx, row_height, gap_height)
+                image, plane[self.COLS["T_LATE"]], idx, row_height, _gap_height)
 
             # Draw bars
             bar_length = plane[self.COLS["T_LATE"]] - \
                 plane[self.COLS["T_EARLY"]]
-            bar_top = (idx*row_height)+gap_height
+            bar_top = (idx*row_height)+_gap_height
             self.__draw_hori__(
                 image, plane[self.COLS["T_EARLY"]], bar_top, bar_length)
             self.__draw_hori__(
@@ -267,10 +316,10 @@ class PlaneSchedule():
 
             # Draw assigned time
             self.__draw_vert__(
-                image, plane[self.COLS["T_ASSIGNED"]], idx, row_height, gap_height)
+                image, plane[self.COLS["T_ASSIGNED"]], idx, row_height, _gap_height)
 
             # Draw target time
             self.__draw_vert__(
-                image, plane[self.COLS["T_TARGET"]], idx, row_height, gap_height, dotted=True)
+                image, plane[self.COLS["T_TARGET"]], idx, row_height, _gap_height, dotted=True)
 
-        image.show()
+        return image
