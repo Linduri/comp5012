@@ -2,24 +2,18 @@
 Container for an NSGA plane schedule solver
 """
 
-import pathlib
 import random
 import logging
 import numpy as np
 
-from PIL import Image
-from pymoo.operators.crossover.pntx import TwoPointCrossover
-# from pymoo.operators.crossover.hux import HalfUniformCrossover
 from pymoo.core.problem import ElementwiseProblem
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.callback import Callback
 from pymoo.optimize import minimize
 from pymoo.core.mutation import Mutation
 from pymoo.termination import get_termination
-from fpdf import FPDF
-from plotting import Plot
 
-# ============================================= DEFINE THE PROBLEM
+
 class PlaneProblem(ElementwiseProblem):
     """
     Defines the plane problem
@@ -52,6 +46,7 @@ class PlaneProblem(ElementwiseProblem):
 
         # out["G"] =
 
+
 class PlaneMutation(Mutation):
     """
     Mutates each schedule
@@ -60,7 +55,7 @@ class PlaneMutation(Mutation):
     _plane_parameters = None
 
     def __init__(self, _population_shape, _plane_parameters, prob=0.5):
-        super().__init__()        
+        super().__init__()
         self._population_shape = _population_shape
         self._plane_parameters = _plane_parameters
         self.prob = prob
@@ -72,9 +67,11 @@ class PlaneMutation(Mutation):
             for _idx, plane in enumerate(_schedule):
                 if random.random() < self.prob:
                     plane[0] = random.uniform(
-                        self._plane_parameters.t_early()[_idx], self._plane_parameters.t_late()[_idx])
+                        self._plane_parameters.t_early()[_idx],
+                        self._plane_parameters.t_late()[_idx])
 
         return _schedules.reshape(X.shape)
+
 
 class PlaneCallback(Callback):
     """
@@ -104,20 +101,21 @@ class PlaneCallback(Callback):
         self._generation += 1
         _new_percent = int(100*(self._generation/self._n_generations))
         if _new_percent != self._last_percent:
-            print(f"\r{self._generation}/{self._n_generations} [{_new_percent}%]", end="")
+            print(
+                f"\r{self._generation}/{self._n_generations} [{_new_percent}%]", end="")
             self._last_percent = _new_percent
+
 
 class PlaneSolver:
     """
     An NSGA model to optimise plane landing schedules
     """
-
     _population_size = 500
     _generations = 500
     _starting_population = None
     _starting_population_flattened = None
     _plane_parameters = None
-    
+
     _problem = None
     _mutation = None
     _callback = None
@@ -129,7 +127,8 @@ class PlaneSolver:
 
     _logger = None
 
-    def __init__(self, _starting_population, _plane_parameters, _population_size, _generations, _crossover):
+    def __init__(self, _starting_population, _plane_parameters,
+                 _population_size, _generations, _crossover):
         self._starting_population = _starting_population
         self._starting_population_flattened = self._starting_population.flatten()
         self._plane_parameters = _plane_parameters
@@ -141,10 +140,14 @@ class PlaneSolver:
         self._logger.info("Initialisng PlaneSolver...")
 
         self._logger.info("Initialisng problem...")
-        self._problem = PlaneProblem(self._starting_population_flattened.shape[0], self._starting_population.shape, self._plane_parameters)
+        self._problem = PlaneProblem(
+            self._starting_population_flattened.shape[0],
+            self._starting_population.shape,
+            self._plane_parameters)
 
         self._logger.info("Initialising mutation...")
-        self._mutation = PlaneMutation(self._starting_population.shape, self._plane_parameters)
+        self._mutation = PlaneMutation(
+            self._starting_population.shape, self._plane_parameters)
 
         self._logger.info("Initialising archive...")
         self._callback = PlaneCallback(self._generations)
@@ -167,12 +170,12 @@ class PlaneSolver:
 
         self._logger.info("Minimising problem...")
         self.res = minimize(problem=self._problem,
-                    algorithm=self._algorithm,
-                    termination=self._termination,
-                    seed=_seed,
-                    save_history=_save_history,
-                    verbose=_verbose,
-                    callback=self._callback)
+                            algorithm=self._algorithm,
+                            termination=self._termination,
+                            seed=_seed,
+                            save_history=_save_history,
+                            verbose=_verbose,
+                            callback=self._callback)
         self._logger.info("")
 
         return self.res
