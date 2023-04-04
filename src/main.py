@@ -68,6 +68,9 @@ class PlaneProblem(ElementwiseProblem):
             np.where(t_delta > 0, t_delta*schedule.p_late(), 0))
 
         out["F"] = [early_score, late_score]
+
+        # if planes are within the mininum wait time of other relveant planes. Constraint = 1
+
 #         # out["G"] =
 
 
@@ -192,8 +195,8 @@ Plot().image(schedule.draw_assigned_times(best), "Best schedule", save_dir=outpu
 
 Plot().pareto_front_2d(res.F[:, 0], res.F[:, 1],
                        save_dir=output_dir, show=False)
-Plot().normalised_pareto_front_3d(
-    res.algorithm.callback.data["F"][1:], save_dir=output_dir, show=False)
+# Plot().normalised_pareto_front_3d(
+#     res.algorithm.callback.data["F"][1:], save_dir=output_dir, show=False)
 Plot().hyper_volume_2d(res.F, save_dir=output_dir, show=False)
 
 # =================================================== GENERATE PDF
@@ -255,8 +258,8 @@ pdf.image(output_dir + "best_schedule.png",
 pdf.image(output_dir + "pareto_front_2d.png",
           x=MARGIN, y=PARETO_START_Y, w=TWO_COL_WIDTH, h=0, type='PNG')
 
-pdf.image(output_dir + "pareto_front_3d.png",
-          x=MARGIN + TWO_COL_WIDTH, y=PARETO_START_Y, w=0, h=PARETO_2D_HEIGHT, type='PNG')
+# pdf.image(output_dir + "pareto_front_3d.png",
+#           x=MARGIN + TWO_COL_WIDTH, y=PARETO_START_Y, w=0, h=PARETO_2D_HEIGHT, type='PNG')
 
 pdf.image(output_dir + "hypervolume.png",
           x=MARGIN, y=HYPERVOLUME_START_Y, w=TWO_COL_WIDTH, h=0, type='PNG')
