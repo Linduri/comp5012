@@ -52,18 +52,18 @@ class PlaneProblem(ElementwiseProblem):
         # for idx,plane in _x_data_frame.iloc[:-1].iterrows():
         #     plane[idx]  schedule
 
-        for idx in range(_x_df.shape[0] - 1):
+        # for idx in range(_x_df.shape[0] - 1):
             
-            delta_time=_x_df.iloc[idx+1]["assigned_time"]-_x_df.iloc[idx]["assigned_time"]
-            p1=_x_df.iloc[idx].index
-            p2=_x_df.iloc[idx+1].index
-            G=[]
-            if delta_time < self._plane_parameters.t_separation()[p1, p2]:
-                G.append(1)
-            else:
-                G.append(0)
-            
-            delta_constraint=sum(G)
+        delta_time=_x_df.iloc[idx+1]["assigned_time"]-_x_df.iloc[idx]["assigned_time"]
+        p1=_x_df.iloc[idx].index
+        p2=_x_df.iloc[idx+1].index
+        G=[]
+        if delta_time < self._plane_parameters.t_separation()[p1, p2]:
+            G.append(1)
+        else:
+            G.append(0)
+        
+        delta_constraint=sum(G)
 
         out["G"]=delta_constraint
 

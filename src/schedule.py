@@ -98,7 +98,7 @@ class PlaneSchedule():
     
     def t_separation(self):
         """Retreive the plane separation matrix."""
-        return self.data()[:, -(self.n_vars() - len(self.COLS))]
+        return self.data()[:, -(self.n_vars() - len(self.COLS)):]
 
     def p_early(self):
         """
@@ -161,8 +161,8 @@ class PlaneSchedule():
             # Keep reading all remaining terms in groups of 6 + n_planes
             # columns = plane attributes + n_planes separation
             # rows = n_planes
-            self.__n_vars = len(self.COLS) + n_planes
-            data = np.zeros([n_planes, self.__n_vars])
+            self._n_vars = len(self.COLS) + n_planes
+            data = np.zeros([n_planes, self._n_vars])
 
             term_idx = 0
             plane_idx = 0
@@ -193,7 +193,7 @@ class PlaneSchedule():
                         data[plane_idx, term_idx] = term
 
                     term_idx += 1
-                    if term_idx == self.__n_vars:
+                    if term_idx == self._n_vars:
                         plane_idx += 1
                         term_idx = 0
 
