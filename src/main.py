@@ -8,6 +8,7 @@ Schedules planes based on set criteria
 import pathlib
 import random
 import numpy as np
+import pandas as pd
 
 from PIL import Image
 from pymoo.operators.crossover.pntx import TwoPointCrossover
@@ -53,7 +54,7 @@ class PlaneProblem(ElementwiseProblem):
     """
 
     def __init__(self, n_vars):
-        super().__init__(n_var=n_vars, n_obj=2, n_ieq_constr=0, xl=0, xu=1)
+        super().__init__(n_var=n_vars, n_obj=2, n_ieq_constr=1, xl=0, xu=1)
 
     def _evaluate(self, x, out, *args, **kwargs):
         """
@@ -85,6 +86,26 @@ class PlaneProblem(ElementwiseProblem):
             np.where(t_delta > 0, t_delta*schedule.p_late(), 0))
 
         out["F"] = [early_score, late_score]
+
+        #convert np array into pandas dataframe
+
+        _x_df=pd.DataFrame(_x,columns=["assigned_time","assigned_runway"])
+        _x_df.sort_values(by=["assigned_time"],inplace=True)
+        
+        # for idx,plane in _x_data_frame.iloc[:-1].iterrows():
+        #     plane[idx]  schedule
+
+        for idx in range(_x_df.shape[0] - 1):
+            
+            delta_time=_x_df.iloc[idx+1]["assigned_time"]-_x_df.iloc[idx]["assigned_time"]
+            if(delta_time >schedule.)
+
+            
+            
+            
+    
+
+
 
      # if planes are within the mininum wait time of other relveant planes. Constraint = 1
 
