@@ -5,6 +5,7 @@ Container for an NSGA plane schedule solver
 import random
 import logging
 import numpy as np
+import pandas as pd
 
 from pymoo.core.problem import ElementwiseProblem
 from pymoo.algorithms.moo.nsga2 import NSGA2
@@ -22,7 +23,7 @@ class PlaneProblem(ElementwiseProblem):
     _plane_parameters = None
 
     def __init__(self, n_vars, _population_shape, _plane_parameters):
-        super().__init__(n_var=n_vars, n_obj=2, n_ieq_constr=0, xl=0, xu=1)
+        super().__init__(n_var=n_vars, n_obj=2, n_ieq_constr=1, xl=0, xu=1)
         self._population_shape = _population_shape
         self._plane_parameters = _plane_parameters
 
@@ -44,7 +45,27 @@ class PlaneProblem(ElementwiseProblem):
 
         out["F"] = [early_score, late_score]
 
-        # out["G"]
+        #convert np array into pandas dataframe
+        _x_df=pd.DataFrame(_x,columns=["assigned_time","assigned_runway"])
+        _x_df.sort_values(by=["assigned_time"],inplace=True)
+        
+        # for idx,plane in _x_data_frame.iloc[:-1].iterrows():
+        #     plane[idx]  schedule
+
+        G=[]
+        for idx in range(_x_df.shape[0] - 1):            
+            delta_time=_x_df.iloc[idx+1]["assigned_time"]-_x_df.iloc[idx]["assigned_time"]
+            p1=_x_df.iloc[idx].name
+            p2=_x_df.iloc[idx+1].name
+        
+            if delta_time < self._plane_parameters.t_separation()[p1, p2]:
+               G.append(1)
+            else:
+               G.append(0)
+            
+        delta_constraint=sum(G)
+
+        out["G"]=delta_constraint
 
 
 class PlaneMutation(Mutation):

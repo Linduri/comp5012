@@ -2,12 +2,9 @@
 Schedules planes based on set criteria
 """
 
-
-
 #marek was here 
 import pathlib
 import numpy as np
-import pandas as pd
 
 from PIL import Image
 from pymoo.operators.crossover.pntx import TwoPointCrossover
@@ -37,7 +34,7 @@ starting_population = np.column_stack([ASSIGNED_TIMES, ASSIGNED_RUNWAY])
 
 # =============================================== DEFINE OPTIMISER
 POP_SIZE = 100
-GENERATIONS = 2000
+GENERATIONS = 10
 
 solver = PlaneOptimiser(starting_population,
                         plane_parameters,

@@ -98,7 +98,7 @@ class PlaneSchedule():
     
     def t_separation(self):
         """Retreive the plane separation matrix."""
-        return self.data().iloc[:-(self.n_vars() - len(self.COLS))]
+        return self.data()[:, -(self.n_vars() - len(self.COLS)):]
 
     def p_early(self):
         """
@@ -161,8 +161,8 @@ class PlaneSchedule():
             # Keep reading all remaining terms in groups of 6 + n_planes
             # columns = plane attributes + n_planes separation
             # rows = n_planes
-            self.__n_vars = len(self.COLS) + n_planes
-            data = np.zeros([n_planes, self.__n_vars])
+            self._n_vars = len(self.COLS) + n_planes
+            data = np.zeros([n_planes, self._n_vars])
 
             term_idx = 0
             plane_idx = 0
@@ -193,7 +193,7 @@ class PlaneSchedule():
                         data[plane_idx, term_idx] = term
 
                     term_idx += 1
-                    if term_idx == self.__n_vars:
+                    if term_idx == self._n_vars:
                         plane_idx += 1
                         term_idx = 0
 
@@ -247,6 +247,7 @@ class PlaneSchedule():
         """
         Draw a vertical line.
         """
+
         for j in range(_row_height-2*_gap_height):
             if dotted:
                 col = (0, 0, 0) if j % 2 == 0 else (255, 255, 255)
@@ -297,7 +298,7 @@ class PlaneSchedule():
             self.__draw_vert__(
                 image, plane[self.COLS["T_APPEAR"]], idx, row_height, _gap_height)
 
-            # Draw appearnce time whisker
+            # Draw appearance time whisker
             whisker_length = plane[self.COLS["T_EARLY"]
                                    ] - plane[self.COLS["T_APPEAR"]]
             self.__draw_hori__(image, plane[self.COLS["T_APPEAR"]], (
@@ -318,12 +319,12 @@ class PlaneSchedule():
             self.__draw_hori__(
                 image, plane[self.COLS["T_EARLY"]], bar_top+bar_height, bar_length)
 
-            # Draw assigned time
-            self.__draw_vert__(
-                image, plane[self.COLS["T_ASSIGNED"]], idx, row_height, _gap_height)
-
             # Draw target time
             self.__draw_vert__(
                 image, plane[self.COLS["T_TARGET"]], idx, row_height, _gap_height, dotted=True)
+
+            # Draw assigned time
+            self.__draw_vert__(
+                image, plane[self.COLS["T_ASSIGNED"]], idx, row_height, _gap_height)            
 
         return image
