@@ -60,7 +60,20 @@ class PlaneProblem(ElementwiseProblem):
         Evaluates how good each population member is
         """
 
+        # x is an interleaved array of assigned landing time (t) and runway number (r).
+        # eg t_plane_0, r_plane_0, t_plane_1, r_plane_1, ..., t_plane_x, r_plane_x
+
         _x = np.reshape(x, population_shape)
+
+        # Here x has been reshaped to a 2d array of landing time (t) and runway nuber (r).
+        # t, r
+        # t_plane_0, r_plane_0
+        # t_plane_1, r_plane_1
+        # ...
+        # t_plane_x, r_plane_x
+
+        # Access the plan information from schedule object.
+        # To get a a np.array of specific attribute use schedule.ATTRIBUTE()
 
         # Evaluate plane ealry/lateness
         t_delta = _x[:, 0] - schedule.t_target()
