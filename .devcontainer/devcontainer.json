@@ -36,11 +36,17 @@
 
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
+				"ms-azuretools.vscode-docker",
 				"ms-python.python",
 				"ms-python.vscode-pylance",
 				"ms-python.pylint",
 				"ms-python.autopep8",
-				"tomoki1207.pdf"
+				"ms-python.flake8",
+				"ms-python.isort",
+				"tomoki1207.pdf",			
+				"dotjoshjohnson.xml",
+				"yzhang.markdown-all-in-one",
+				"yzane.markdown-pdf"
 			]
 		}
 	},
