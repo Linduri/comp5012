@@ -1,8 +1,13 @@
 """
 Schedules planes based on set criteria
 """
+
+
+
+#marek was here 
 import pathlib
 import numpy as np
+import pandas as pd
 
 from PIL import Image
 from pymoo.operators.crossover.pntx import TwoPointCrossover
