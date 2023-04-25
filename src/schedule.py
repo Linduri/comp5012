@@ -95,6 +95,10 @@ class PlaneSchedule():
         Retreive the latest landing times of each plane as a 1D array.
         """
         return self.data()[:, self.COLS["T_LATE"]]
+    
+    def t_separation(self):
+        """Retreive the plane separation matrix."""
+        return self.data().iloc[:-(self.n_vars() - len(self.COLS))]
 
     def p_early(self):
         """
