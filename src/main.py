@@ -34,7 +34,7 @@ starting_population = np.column_stack([ASSIGNED_TIMES, ASSIGNED_RUNWAY])
 
 # =============================================== DEFINE OPTIMISER
 POP_SIZE = 100
-GENERATIONS = 500
+GENERATIONS = 10
 
 solver = PlaneOptimiser(starting_population,
                         plane_parameters,
@@ -54,7 +54,6 @@ Plot().image(plane_parameters.draw_planes(), "Starting schedule", save_dir=outpu
 
 print("Drawing best schedule...")
 best = res.X[0].reshape(starting_population.shape)[:, 0]
-print(best)
 Plot().image(plane_parameters.draw_assigned_times(best),
              "Best schedule",
              save_dir=output_dir,
