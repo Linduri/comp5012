@@ -52,10 +52,10 @@ class PlaneProblem(ElementwiseProblem):
         # for idx,plane in _x_data_frame.iloc[:-1].iterrows():
         #     plane[idx]  schedule
 
-        for idx in range(_x_df.shape[0] - 1):
+        # for idx in range(_x_df.shape[0] - 1):
             
-            delta_time=_x_df.iloc[idx+1]["assigned_time"]-_x_df.iloc[idx]["assigned_time"]
-            if(delta_time >schedule.)
+        #     delta_time=_x_df.iloc[idx+1]["assigned_time"]-_x_df.iloc[idx]["assigned_time"]
+        #     if(delta_time >schedule.)
 
         # out["G"]
 
