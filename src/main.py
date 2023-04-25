@@ -86,8 +86,18 @@ class PlaneProblem(ElementwiseProblem):
 
         out["F"] = [early_score, late_score]
 
-        # if planes are within the mininum wait time of other relveant planes. Constraint = 1
+     # if planes are within the mininum wait time of other relveant planes. Constraint = 1
 
+        #plane not arrived within assigned window
+       # if (_x[:,0]>schedule.t_late or _x[:,0]<schedule.t_early):
+            #out["G"]=0
+       # else:
+            #out["G"]=1
+        
+        # IF XYZ THEN PLANE_SEP_CONSTRAINT = TRUE/FALSE
+
+        # if planes are within the mininum wait time of other relveant planes. Constraint = 1
+#  CONSTRAINTS = [ PLANES HAVE SEPEARTION DISTANCE, SATISFY RUNWAY CONSTRAINT        #            G = [ 1                              , 0                        ]
 #         # out["G"] =
 
 
