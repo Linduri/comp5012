@@ -58,7 +58,7 @@ class PlaneProblem(ElementwiseProblem):
             p1=_x_df.iloc[idx].name
             p2=_x_df.iloc[idx+1].name
         
-            if delta_time > self._plane_parameters.t_separation()[p1, p2]:
+            if delta_time < self._plane_parameters.t_separation()[p1, p2]:
                G.append(1)
             else:
                G.append(0)

@@ -243,15 +243,19 @@ class PlaneSchedule():
         """
         return (_data.copy() * (_width - 1)).astype(int)
 
-    def __draw_vert__(self, image, _x, _row, _row_height, _gap_height, dotted=False):
+    def __draw_vert__(self, image, _x, _row, _row_height, _gap_height, dotted=False, col=None):
         """
         Draw a vertical line.
         """
+
+        if col is None:
+            col = (0, 0, 0)
+
         for j in range(_row_height-2*_gap_height):
             if dotted:
-                col = (0, 0, 0) if j % 2 == 0 else (255, 255, 255)
+                col = col if j % 2 == 0 else (255, 255, 255)
             else:
-                col = (0, 0, 0)
+                col = col
 
             image.putpixel((_x, (_row*_row_height)+_gap_height+j), col)
 
@@ -297,7 +301,7 @@ class PlaneSchedule():
             self.__draw_vert__(
                 image, plane[self.COLS["T_APPEAR"]], idx, row_height, _gap_height)
 
-            # Draw appearnce time whisker
+            # Draw appearance time whisker
             whisker_length = plane[self.COLS["T_EARLY"]
                                    ] - plane[self.COLS["T_APPEAR"]]
             self.__draw_hori__(image, plane[self.COLS["T_APPEAR"]], (
@@ -320,7 +324,7 @@ class PlaneSchedule():
 
             # Draw assigned time
             self.__draw_vert__(
-                image, plane[self.COLS["T_ASSIGNED"]], idx, row_height, _gap_height)
+                image, plane[self.COLS["T_ASSIGNED"]], idx, row_height, _gap_height, col=(255, 0, 0))
 
             # Draw target time
             self.__draw_vert__(
