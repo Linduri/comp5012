@@ -44,7 +44,7 @@ class PlaneProblem(ElementwiseProblem):
 
         out["F"] = [early_score, late_score]
 
-        # out["G"] =
+        # out["G"]
 
 
 class PlaneMutation(Mutation):
