@@ -98,7 +98,7 @@ class PlaneSchedule():
     
     def t_separation(self):
         """Retreive the plane separation matrix."""
-        return self.data().iloc[:-(self.n_vars() - len(self.COLS))]
+        return self.data()[:, -(self.n_vars() - len(self.COLS))]
 
     def p_early(self):
         """
