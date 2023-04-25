@@ -5,6 +5,7 @@ Container for an NSGA plane schedule solver
 import random
 import logging
 import numpy as np
+import pandas as pd
 
 from pymoo.core.problem import ElementwiseProblem
 from pymoo.algorithms.moo.nsga2 import NSGA2
@@ -43,6 +44,18 @@ class PlaneProblem(ElementwiseProblem):
             np.where(t_delta > 0, t_delta*self._plane_parameters.p_late(), 0))
 
         out["F"] = [early_score, late_score]
+
+        #convert np array into pandas dataframe
+        _x_df=pd.DataFrame(_x,columns=["assigned_time","assigned_runway"])
+        _x_df.sort_values(by=["assigned_time"],inplace=True)
+        
+        # for idx,plane in _x_data_frame.iloc[:-1].iterrows():
+        #     plane[idx]  schedule
+
+        for idx in range(_x_df.shape[0] - 1):
+            
+            delta_time=_x_df.iloc[idx+1]["assigned_time"]-_x_df.iloc[idx]["assigned_time"]
+            if(delta_time >schedule.)
 
         # out["G"]
 
