@@ -322,12 +322,12 @@ class PlaneSchedule():
             self.__draw_hori__(
                 image, plane[self.COLS["T_EARLY"]], bar_top+bar_height, bar_length)
 
-            # Draw assigned time
-            self.__draw_vert__(
-                image, plane[self.COLS["T_ASSIGNED"]], idx, row_height, _gap_height, col=(255, 0, 0))
-
             # Draw target time
             self.__draw_vert__(
                 image, plane[self.COLS["T_TARGET"]], idx, row_height, _gap_height, dotted=True)
+
+            # Draw assigned time
+            self.__draw_vert__(
+                image, plane[self.COLS["T_ASSIGNED"]], idx, row_height, _gap_height, col=(255, 0, 0))            
 
         return image

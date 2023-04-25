@@ -54,6 +54,7 @@ Plot().image(plane_parameters.draw_planes(), "Starting schedule", save_dir=outpu
 
 print("Drawing best schedule...")
 best = res.X[0].reshape(starting_population.shape)[:, 0]
+print(best)
 Plot().image(plane_parameters.draw_assigned_times(best),
              "Best schedule",
              save_dir=output_dir,
