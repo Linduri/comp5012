@@ -55,13 +55,13 @@ class PlaneProblem(ElementwiseProblem):
         G=[]
         for idx in range(_x_df.shape[0] - 1):            
             delta_time=_x_df.iloc[idx+1]["assigned_time"]-_x_df.iloc[idx]["assigned_time"]
-            p1=_x_df.iloc[idx].index
-            p2=_x_df.iloc[idx+1].index
-            
-            if delta_time < self._plane_parameters.t_separation()[p1, p2]:
-                G.append(1)
+            p1=_x_df.iloc[idx].name
+            p2=_x_df.iloc[idx+1].name
+        
+            if delta_time > self._plane_parameters.t_separation()[p1, p2]:
+               G.append(1)
             else:
-                G.append(0)
+               G.append(0)
             
         delta_constraint=sum(G)
 
