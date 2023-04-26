@@ -35,7 +35,7 @@ starting_population = np.column_stack([ASSIGNED_TIMES, ASSIGNED_RUNWAY])
 
 # =============================================== DEFINE OPTIMISER
 POP_SIZE = 100
-GENERATIONS = 200
+GENERATIONS = 2000
 
 solver = PlaneOptimiser(starting_population,
                         plane_parameters,
