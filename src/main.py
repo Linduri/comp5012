@@ -16,6 +16,9 @@ from plotting import Plot
 from schedule import PlaneSchedule
 from plane_optimiser import PlaneOptimiser
 
+import logging
+
+log = logging.getLogger('schedule')
 
 # ====================================================== LOAD DATA
 FILE_IDX = 1
@@ -36,7 +39,7 @@ starting_population = np.column_stack([ASSIGNED_TIMES, ASSIGNED_RUNWAY])
 
 # =============================================== DEFINE OPTIMISER
 POP_SIZE = 100
-GENERATIONS = 2000
+GENERATIONS = 200
 
 solver = PlaneOptimiser(starting_population,
                         plane_parameters,
@@ -83,7 +86,7 @@ HYPERPARAMETERS_START_Y = HEADER_HEIGHT + MARGIN + CELL_PADDING
 SCHEDULES_START_Y = HYPERPARAMETERS_START_Y + \
     HYPERPARAMETERS_HEIGHT + CELL_PADDING
 
-with Image.open(f"{output_dir + 'best_schedule.png'}") as im:
+with Image.open(f"{output_dir + 'best_schedule.jpg'}") as im:
     SCHEDULE_HEIGHT = (im.size[1]/im.size[0])*TWO_COL_WIDTH
 
 with Image.open(f"{output_dir + 'pareto_front_2d.png'}") as im:

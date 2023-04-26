@@ -282,58 +282,6 @@ class PlaneSchedule():
 
         return plane_data
 
-    # def draw_planes(self, _width=512, _data=None, _pixel_height=20, _gap_height=3):
-    #     """
-    #     Draw plane event times for easier analysis of the data.
-    #     """
-
-    #     if _data is None:
-    #         plane_data = self.__generate_draw_data__(self.__norm_data, _width)
-    #     else:
-    #         plane_data = self.__generate_draw_data__(_data, _width)
-
-    #     row_height = _pixel_height+_gap_height
-    #     bar_height = _pixel_height-_gap_height
-
-    #     image = Image.new('RGB', (_width, self.__norm_data.shape[0]*row_height))
-    #     ImageDraw.floodfill(image, xy=(0, 0), value=(255, 255, 255))
-
-    #     for idx, plane in enumerate(plane_data):
-    #         # Draw appearance time
-    #         self.__draw_vert__(
-    #             image, plane[self.COLS["T_APPEAR"]], idx, row_height, _gap_height)
-
-    #         # Draw appearance time whisker
-    #         whisker_length = plane[self.COLS["T_EARLY"]
-    #                                ] - plane[self.COLS["T_APPEAR"]]
-    #         self.__draw_hori__(image, plane[self.COLS["T_APPEAR"]], (
-    #             idx*row_height)+int(row_height/2), whisker_length)
-
-    #         # Draw left (early) and right (late) lines
-    #         self.__draw_vert__(
-    #             image, plane[self.COLS["T_EARLY"]], idx, row_height, _gap_height)
-    #         self.__draw_vert__(
-    #             image, plane[self.COLS["T_LATE"]], idx, row_height, _gap_height)
-
-    #         # Draw bars
-    #         bar_length = plane[self.COLS["T_LATE"]] - \
-    #             plane[self.COLS["T_EARLY"]]
-    #         bar_top = (idx*row_height)+_gap_height
-    #         self.__draw_hori__(
-    #             image, plane[self.COLS["T_EARLY"]], bar_top, bar_length)
-    #         self.__draw_hori__(
-    #             image, plane[self.COLS["T_EARLY"]], bar_top+bar_height, bar_length)
-
-    #         # Draw target time
-    #         self.__draw_vert__(
-    #             image, plane[self.COLS["T_TARGET"]], idx, row_height, _gap_height, dotted=True)
-
-    #         # Draw assigned time
-    #         self.__draw_vert__(
-    #             image, plane[self.COLS["T_ASSIGNED"]], idx, row_height, _gap_height)            
-
-    #     return image
-
     def draw_planes(self, _width=512, _data=None, _pixel_height=20, _gap_height=3):
         """
         Draw plane event times for easier analysis of the data.
@@ -365,8 +313,9 @@ class PlaneSchedule():
         sorted_data = plane_data.copy()
         # Add row numbers to track plane id.
         sorted_data = np.insert(sorted_data, 0, np.arange(sorted_data.shape[0]), axis=1)
+        sorted_assigned_col = self.COLS['T_ASSIGNED'] + 1
         # Sort planes by assigned landing time
-        sorted_data = sorted_data[sorted_data[:, self.COLS['T_ASSIGNED']].argsort()]
+        sorted_data = sorted_data[sorted_data[:, sorted_assigned_col].argsort()]
 
         self.logger.debug('Sorted schedule...\n %s', str(pd.DataFrame(sorted_data)))
         for i in range(sorted_data[:-1].shape[0]):
@@ -375,7 +324,7 @@ class PlaneSchedule():
             i_plane_sep = plane_data[i_plane, len(self.COLS) + i_next_plane]
             self.logger.debug('i_plane: %s, i_next_plane %s, i_plane_separation: %s', i_plane, i_next_plane, i_plane_sep)
 
-            for separation in range(i_plane_sep):                
+            for separation in range(i_plane_sep-1):                
                 image.putpixel((plane_data[i_plane, self.COLS['T_ASSIGNED']] + separation + 1,
                                 i_plane),
                                 (125, 125, 125))
@@ -384,16 +333,10 @@ class PlaneSchedule():
             image.putpixel((plane[self.COLS['T_TARGET']], idx), (0, 0, 0))
 
         for idx, plane in enumerate(plane_data):
-            image.putpixel((plane[self.COLS['T_ASSIGNED']], idx), (255, 0, 0))
+            image.putpixel((plane[self.COLS['T_ASSIGNED']], idx), (255, 255, 255))
 
-        aspect = self.__norm_data.shape[0] / width
-        new_width = width * 4
-        new_height = aspect*new_width
-        height = new_height if new_height > 500 else 500
-        print(image.size*4)
         scale = 4
         new_width = image.size[0]*scale
         new_height = image.size[1]*scale if image.size[1]*scale > 500 else 500
-        image = image.resize(size=(new_width, new_h), resample=Image.NEAREST)
+        image = image.resize(size=(new_width, new_height), resample=Image.NEAREST)
         return image
-    
