@@ -3,6 +3,7 @@ Schedules planes based on set criteria
 """
 
 #marek was here 
+import os
 import pathlib
 import numpy as np
 
@@ -51,14 +52,17 @@ output_dir = f"{pathlib.Path(__file__).parent.parent.absolute()}/report/"
 
 # =================================================== PLOT FIGURES
 print("Drawing starting schedule...")
-Plot().image(plane_parameters.draw_planes(), "Starting schedule", save_dir=output_dir, show=False)
+# Plot().image(plane_parameters.draw_planes(), "Starting schedule", save_dir=output_dir, show=False)
+plane_parameters.draw_planes().save(os.path.join(output_dir, 'starting_schedule.jpg'))
 
 print("Drawing best schedule...")
 best = res.X[0].reshape(starting_population.shape)[:, 0]
-Plot().image(plane_parameters.draw_assigned_times(best),
-             "Best schedule",
-             save_dir=output_dir,
-             show=False)
+plane_parameters.draw_assigned_times(best).save(os.path.join(output_dir, 'best_schedule.jpg'))
+
+# Plot().image(plane_parameters.draw_assigned_times(best),
+#              "Best schedule",
+#              save_dir=output_dir,
+#              show=False)
 
 Plot().pareto_front_2d(res.F[:, 0], res.F[:, 1],
                     save_dir=output_dir, show=False)
@@ -115,11 +119,11 @@ pdf.cell(w=(PAGE_WIDTH/2),
         ln=0)
 
 # SCHEDULES
-pdf.image(output_dir + "starting_schedule.png",
-        x=MARGIN, y=SCHEDULES_START_Y, w=TWO_COL_WIDTH, h=0, type='PNG')
+pdf.image(output_dir + "starting_schedule.jpg",
+        x=MARGIN, y=SCHEDULES_START_Y, w=TWO_COL_WIDTH, h=0, type='JPG')
 
-pdf.image(output_dir + "best_schedule.png",
-        x=MARGIN + TWO_COL_WIDTH, y=SCHEDULES_START_Y, w=TWO_COL_WIDTH, h=0, type='PNG')
+pdf.image(output_dir + "best_schedule.jpg",
+        x=MARGIN + TWO_COL_WIDTH, y=SCHEDULES_START_Y, w=TWO_COL_WIDTH, h=0, type='JPG')
 
 # PARETO
 pdf.image(output_dir + "pareto_front_2d.png",
