@@ -228,14 +228,14 @@ class PlaneSchedule():
         for penalty_col in ["P_EARLY", "P_LATE"]:
             self.__norm_data[:, self.COLS[penalty_col]] = np.interp(
                 self.__norm_data[:, self.COLS[penalty_col]], (p_min, p_max), (0, 1))
-        # Interval should remain in the same scale across all interval columns.
-        i_min = 0
-        i_max = max([upper_bounds[len(self.COLS) + i]
-                    for i in range(self._n_planes)])
+
+        # Sepeartion need to be in the same scale as time.
+        t_range = t_latest - t_earliest
+        t_unit = 1 / t_range
 
         for i in range(self._n_planes):
-            self.__norm_data[:, len(self.COLS) + i] = np.interp(
-                self.__norm_data[:, len(self.COLS) + i], (i_min, i_max), (0, 1))
+            self.__norm_data[:, len(self.COLS) + i] = \
+                self.__norm_data[:, len(self.COLS) + i] * t_unit
 
     def __generate_draw_data__(self, _data, _width):
         """

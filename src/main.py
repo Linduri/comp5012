@@ -7,6 +7,7 @@ import pathlib
 import numpy as np
 
 from PIL import Image
+import pandas as pd
 from pymoo.operators.crossover.pntx import TwoPointCrossover
 
 from fpdf import FPDF
@@ -21,6 +22,9 @@ filepath = f"{pathlib.Path(__file__).parent.parent.absolute()}/data/airland{FILE
 
 print("Loading plane data...")
 plane_parameters = PlaneSchedule(filepath)
+
+print(pd.DataFrame(plane_parameters.raw()))
+print(pd.DataFrame(plane_parameters.data()))
 
 # ========================================== INITIALISE POPULATION
 
