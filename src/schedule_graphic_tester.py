@@ -1,5 +1,6 @@
 """Test the schedule viewer."""
 
+import os
 import pathlib
 from plotting import Plot
 from schedule import PlaneSchedule
@@ -15,4 +16,8 @@ plane_parameters.mutate(_prob=1.0)
 
 print("Drawing starting schedule...")
 output_dir = f"{pathlib.Path(__file__).parent.parent.absolute()}/report/"
-Plot().image(plane_parameters.draw_planes(), "Starting schedule", save_dir=output_dir, show=False)
+Plot().image(plane_parameters.draw_planes(), "Starting schedule", save_dir=output_dir)
+
+
+fig = plane_parameters.draw_planes()
+fig.save(os.path.join(output_dir, 'test_im.jpg'))

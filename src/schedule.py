@@ -7,6 +7,7 @@ import random
 import numpy as np
 
 from PIL import Image, ImageDraw
+import pandas as pd
 
 
 class PlaneSchedule():
@@ -241,7 +242,11 @@ class PlaneSchedule():
         """
         Generate pixel coordianates for each variable.
         """
-        return (_data.copy() * (_width - 1)).astype(int)
+        # Replace any invalid separtion values.
+        data = _data.copy()
+        separations = data[:, -(self.n_vars() - len(self.COLS)):]
+        separations[separations > 130] = 0
+        return (data * (_width - 1)).astype(int)
 
     def __draw_vert__(self, image, _x, _row, _row_height, _gap_height, dotted=False):
         """
@@ -277,6 +282,58 @@ class PlaneSchedule():
 
         return plane_data
 
+    # def draw_planes(self, _width=512, _data=None, _pixel_height=20, _gap_height=3):
+    #     """
+    #     Draw plane event times for easier analysis of the data.
+    #     """
+
+    #     if _data is None:
+    #         plane_data = self.__generate_draw_data__(self.__norm_data, _width)
+    #     else:
+    #         plane_data = self.__generate_draw_data__(_data, _width)
+
+    #     row_height = _pixel_height+_gap_height
+    #     bar_height = _pixel_height-_gap_height
+
+    #     image = Image.new('RGB', (_width, self.__norm_data.shape[0]*row_height))
+    #     ImageDraw.floodfill(image, xy=(0, 0), value=(255, 255, 255))
+
+    #     for idx, plane in enumerate(plane_data):
+    #         # Draw appearance time
+    #         self.__draw_vert__(
+    #             image, plane[self.COLS["T_APPEAR"]], idx, row_height, _gap_height)
+
+    #         # Draw appearance time whisker
+    #         whisker_length = plane[self.COLS["T_EARLY"]
+    #                                ] - plane[self.COLS["T_APPEAR"]]
+    #         self.__draw_hori__(image, plane[self.COLS["T_APPEAR"]], (
+    #             idx*row_height)+int(row_height/2), whisker_length)
+
+    #         # Draw left (early) and right (late) lines
+    #         self.__draw_vert__(
+    #             image, plane[self.COLS["T_EARLY"]], idx, row_height, _gap_height)
+    #         self.__draw_vert__(
+    #             image, plane[self.COLS["T_LATE"]], idx, row_height, _gap_height)
+
+    #         # Draw bars
+    #         bar_length = plane[self.COLS["T_LATE"]] - \
+    #             plane[self.COLS["T_EARLY"]]
+    #         bar_top = (idx*row_height)+_gap_height
+    #         self.__draw_hori__(
+    #             image, plane[self.COLS["T_EARLY"]], bar_top, bar_length)
+    #         self.__draw_hori__(
+    #             image, plane[self.COLS["T_EARLY"]], bar_top+bar_height, bar_length)
+
+    #         # Draw target time
+    #         self.__draw_vert__(
+    #             image, plane[self.COLS["T_TARGET"]], idx, row_height, _gap_height, dotted=True)
+
+    #         # Draw assigned time
+    #         self.__draw_vert__(
+    #             image, plane[self.COLS["T_ASSIGNED"]], idx, row_height, _gap_height)            
+
+    #     return image
+
     def draw_planes(self, _width=512, _data=None, _pixel_height=20, _gap_height=3):
         """
         Draw plane event times for easier analysis of the data.
@@ -287,44 +344,29 @@ class PlaneSchedule():
         else:
             plane_data = self.__generate_draw_data__(_data, _width)
 
-        row_height = _pixel_height+_gap_height
-        bar_height = _pixel_height-_gap_height
-
-        image = Image.new('RGB', (_width, self.__norm_data.shape[0]*row_height))
+        # Width can either be latest landing time or assigned time + separation.
+        latest_land = max(plane_data[self.COLS["T_LATE"]])
+        latest_assigned = max(
+            plane_data[:, self.COLS["T_ASSIGNED"]]
+            + np.transpose(np.amax(plane_data[:, -(self.n_vars() - len(self.COLS)):], axis=1))
+            )
+        
+        width = max([latest_land, latest_assigned])
+        image = Image.new('RGB', (width, self.__norm_data.shape[0]))
         ImageDraw.floodfill(image, xy=(0, 0), value=(255, 255, 255))
 
         for idx, plane in enumerate(plane_data):
-            # Draw appearance time
-            self.__draw_vert__(
-                image, plane[self.COLS["T_APPEAR"]], idx, row_height, _gap_height)
+            image.putpixel((plane[self.COLS['T_EARLY']], idx), (0, 0, 0))
 
-            # Draw appearance time whisker
-            whisker_length = plane[self.COLS["T_EARLY"]
-                                   ] - plane[self.COLS["T_APPEAR"]]
-            self.__draw_hori__(image, plane[self.COLS["T_APPEAR"]], (
-                idx*row_height)+int(row_height/2), whisker_length)
+        for idx, plane in enumerate(plane_data):
+            image.putpixel((plane[self.COLS['T_ASSIGNED']], idx), (255, 0, 0))
 
-            # Draw left (early) and right (late) lines
-            self.__draw_vert__(
-                image, plane[self.COLS["T_EARLY"]], idx, row_height, _gap_height)
-            self.__draw_vert__(
-                image, plane[self.COLS["T_LATE"]], idx, row_height, _gap_height)
 
-            # Draw bars
-            bar_length = plane[self.COLS["T_LATE"]] - \
-                plane[self.COLS["T_EARLY"]]
-            bar_top = (idx*row_height)+_gap_height
-            self.__draw_hori__(
-                image, plane[self.COLS["T_EARLY"]], bar_top, bar_length)
-            self.__draw_hori__(
-                image, plane[self.COLS["T_EARLY"]], bar_top+bar_height, bar_length)
-
-            # Draw target time
-            self.__draw_vert__(
-                image, plane[self.COLS["T_TARGET"]], idx, row_height, _gap_height, dotted=True)
-
-            # Draw assigned time
-            self.__draw_vert__(
-                image, plane[self.COLS["T_ASSIGNED"]], idx, row_height, _gap_height)            
-
+        aspect = self.__norm_data.shape[0] / width
+        new_width = 2048
+        new_height = aspect*new_width
+        height = new_height if new_height > 200 else 200
+        image = image.resize(size=(new_width, height), resample=Image.NEAREST)
+        print(image.size)
         return image
+    
