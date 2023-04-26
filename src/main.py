@@ -23,9 +23,6 @@ filepath = f"{pathlib.Path(__file__).parent.parent.absolute()}/data/airland{FILE
 print("Loading plane data...")
 plane_parameters = PlaneSchedule(filepath)
 
-print(pd.DataFrame(plane_parameters.raw()))
-print(pd.DataFrame(plane_parameters.data()))
-
 # ========================================== INITIALISE POPULATION
 
 print("Initialising population...")
@@ -38,7 +35,7 @@ starting_population = np.column_stack([ASSIGNED_TIMES, ASSIGNED_RUNWAY])
 
 # =============================================== DEFINE OPTIMISER
 POP_SIZE = 100
-GENERATIONS = 10
+GENERATIONS = 200
 
 solver = PlaneOptimiser(starting_population,
                         plane_parameters,
