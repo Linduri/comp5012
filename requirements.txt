@@ -6,3 +6,5 @@ pandas
 pillow
 pydantic
 fpdf
+optuna
+optuna-dashboard
