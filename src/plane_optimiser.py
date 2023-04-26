@@ -198,5 +198,5 @@ class PlaneOptimiser:
                             verbose=_verbose,
                             callback=self._callback)
         self._logger.info("")
-
+        
         return self.res

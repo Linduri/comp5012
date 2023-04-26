@@ -244,9 +244,10 @@ class PlaneSchedule():
         """
         # Replace any invalid separtion values.
         data = _data.copy()
+        data = (data * (_width - 1)).astype(int)
         separations = data[:, -(self.n_vars() - len(self.COLS)):]
-        separations[separations > 130] = 0
-        return (data * (_width - 1)).astype(int)
+        separations[separations > 5000] = 0
+        return data
 
     def __draw_vert__(self, image, _x, _row, _row_height, _gap_height, dotted=False):
         """
@@ -300,8 +301,10 @@ class PlaneSchedule():
             )
         
         width = max([latest_land, latest_assigned]) + 1
-        image = Image.new('RGB', (width, self.__norm_data.shape[0]*2))
+        image = Image.new('RGB', (width, self.__norm_data.shape[0]))
         ImageDraw.floodfill(image, xy=(0, 0), value=(255, 255, 255))
+
+        print(pd.DataFrame(plane_data))
 
         # Draw landing window        
         for idx, plane in enumerate(plane_data):
@@ -317,26 +320,26 @@ class PlaneSchedule():
         # Sort planes by assigned landing time
         sorted_data = sorted_data[sorted_data[:, sorted_assigned_col].argsort()]
 
-        self.logger.debug('Sorted schedule...\n %s', str(pd.DataFrame(sorted_data)))
+        self.logger.info('Sorted schedule...\n %s', str(pd.DataFrame(sorted_data)))
         for i in range(sorted_data[:-1].shape[0]):
             i_plane = sorted_data[i, 0]
             i_next_plane = sorted_data[i + 1, 0]
             i_plane_sep = plane_data[i_plane, len(self.COLS) + i_next_plane]
             self.logger.debug('i_plane: %s, i_next_plane %s, i_plane_separation: %s', i_plane, i_next_plane, i_plane_sep)
 
-            for separation in range(i_plane_sep-1):                
+            for separation in range(i_plane_sep):                
                 image.putpixel((plane_data[i_plane, self.COLS['T_ASSIGNED']] + separation + 1,
                                 i_plane),
                                 (125, 125, 125))
 
         for idx, plane in enumerate(plane_data):
-            image.putpixel((plane[self.COLS['T_TARGET']], idx), (0, 0, 0))
+            image.putpixel((plane[self.COLS['T_TARGET']], idx), (0, 0, 255))
 
         for idx, plane in enumerate(plane_data):
-            image.putpixel((plane[self.COLS['T_ASSIGNED']], idx), (255, 255, 255))
+            image.putpixel((plane[self.COLS['T_ASSIGNED']], idx), (255, 0, 0))
 
         scale = 4
         new_width = image.size[0]*scale
-        new_height = image.size[1]*scale if image.size[1]*scale > 500 else 500
+        new_height = image.size[1] if image.size[1] > 500 else 500
         image = image.resize(size=(new_width, new_height), resample=Image.NEAREST)
         return image
