@@ -7,6 +7,7 @@ import random
 import numpy as np
 
 from PIL import Image, ImageDraw
+import pandas as pd
 
 
 class PlaneSchedule():
@@ -228,20 +229,24 @@ class PlaneSchedule():
         for penalty_col in ["P_EARLY", "P_LATE"]:
             self.__norm_data[:, self.COLS[penalty_col]] = np.interp(
                 self.__norm_data[:, self.COLS[penalty_col]], (p_min, p_max), (0, 1))
-        # Interval should remain in the same scale across all interval columns.
-        i_min = 0
-        i_max = max([upper_bounds[len(self.COLS) + i]
-                    for i in range(self._n_planes)])
+
+        # Sepeartion need to be in the same scale as time.
+        t_range = t_latest - t_earliest
+        t_unit = 1 / t_range
 
         for i in range(self._n_planes):
-            self.__norm_data[:, len(self.COLS) + i] = np.interp(
-                self.__norm_data[:, len(self.COLS) + i], (i_min, i_max), (0, 1))
+            self.__norm_data[:, len(self.COLS) + i] = \
+                self.__norm_data[:, len(self.COLS) + i] * t_unit
 
     def __generate_draw_data__(self, _data, _width):
         """
         Generate pixel coordianates for each variable.
         """
-        return (_data.copy() * (_width - 1)).astype(int)
+        # Replace any invalid separtion values.
+        data = _data.copy()
+        separations = data[:, -(self.n_vars() - len(self.COLS)):]
+        separations[separations > 130] = 0
+        return (data * (_width - 1)).astype(int)
 
     def __draw_vert__(self, image, _x, _row, _row_height, _gap_height, dotted=False):
         """
@@ -287,44 +292,51 @@ class PlaneSchedule():
         else:
             plane_data = self.__generate_draw_data__(_data, _width)
 
-        row_height = _pixel_height+_gap_height
-        bar_height = _pixel_height-_gap_height
-
-        image = Image.new('RGB', (_width, self.__norm_data.shape[0]*row_height))
+        # Width can either be latest landing time or assigned time + separation.
+        latest_land = max(plane_data[self.COLS["T_LATE"]])
+        latest_assigned = max(
+            plane_data[:, self.COLS["T_ASSIGNED"]]
+            + np.transpose(np.amax(plane_data[:, -(self.n_vars() - len(self.COLS)):], axis=1))
+            )
+        
+        width = max([latest_land, latest_assigned]) + 1
+        image = Image.new('RGB', (width, self.__norm_data.shape[0]*2))
         ImageDraw.floodfill(image, xy=(0, 0), value=(255, 255, 255))
 
+        # Draw landing window        
         for idx, plane in enumerate(plane_data):
-            # Draw appearance time
-            self.__draw_vert__(
-                image, plane[self.COLS["T_APPEAR"]], idx, row_height, _gap_height)
+            window_length = plane[self.COLS['T_LATE']] - plane[self.COLS['T_EARLY']]
+            col = (190, 190, 190) if idx % 2 == 0 else (210, 210, 210)
+            for i in range(window_length):
+                image.putpixel((plane[self.COLS['T_EARLY']] + i, idx), col)
 
-            # Draw appearance time whisker
-            whisker_length = plane[self.COLS["T_EARLY"]
-                                   ] - plane[self.COLS["T_APPEAR"]]
-            self.__draw_hori__(image, plane[self.COLS["T_APPEAR"]], (
-                idx*row_height)+int(row_height/2), whisker_length)
+        sorted_data = plane_data.copy()
+        # Add row numbers to track plane id.
+        sorted_data = np.insert(sorted_data, 0, np.arange(sorted_data.shape[0]), axis=1)
+        sorted_assigned_col = self.COLS['T_ASSIGNED'] + 1
+        # Sort planes by assigned landing time
+        sorted_data = sorted_data[sorted_data[:, sorted_assigned_col].argsort()]
 
-            # Draw left (early) and right (late) lines
-            self.__draw_vert__(
-                image, plane[self.COLS["T_EARLY"]], idx, row_height, _gap_height)
-            self.__draw_vert__(
-                image, plane[self.COLS["T_LATE"]], idx, row_height, _gap_height)
+        self.logger.debug('Sorted schedule...\n %s', str(pd.DataFrame(sorted_data)))
+        for i in range(sorted_data[:-1].shape[0]):
+            i_plane = sorted_data[i, 0]
+            i_next_plane = sorted_data[i + 1, 0]
+            i_plane_sep = plane_data[i_plane, len(self.COLS) + i_next_plane]
+            self.logger.debug('i_plane: %s, i_next_plane %s, i_plane_separation: %s', i_plane, i_next_plane, i_plane_sep)
 
-            # Draw bars
-            bar_length = plane[self.COLS["T_LATE"]] - \
-                plane[self.COLS["T_EARLY"]]
-            bar_top = (idx*row_height)+_gap_height
-            self.__draw_hori__(
-                image, plane[self.COLS["T_EARLY"]], bar_top, bar_length)
-            self.__draw_hori__(
-                image, plane[self.COLS["T_EARLY"]], bar_top+bar_height, bar_length)
+            for separation in range(i_plane_sep-1):                
+                image.putpixel((plane_data[i_plane, self.COLS['T_ASSIGNED']] + separation + 1,
+                                i_plane),
+                                (125, 125, 125))
 
-            # Draw target time
-            self.__draw_vert__(
-                image, plane[self.COLS["T_TARGET"]], idx, row_height, _gap_height, dotted=True)
+        for idx, plane in enumerate(plane_data):
+            image.putpixel((plane[self.COLS['T_TARGET']], idx), (0, 0, 0))
 
-            # Draw assigned time
-            self.__draw_vert__(
-                image, plane[self.COLS["T_ASSIGNED"]], idx, row_height, _gap_height)            
+        for idx, plane in enumerate(plane_data):
+            image.putpixel((plane[self.COLS['T_ASSIGNED']], idx), (255, 255, 255))
 
+        scale = 4
+        new_width = image.size[0]*scale
+        new_height = image.size[1]*scale if image.size[1]*scale > 500 else 500
+        image = image.resize(size=(new_width, new_height), resample=Image.NEAREST)
         return image
