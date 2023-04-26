@@ -3,6 +3,7 @@ Schedules planes based on set criteria
 """
 
 #marek was here 
+import os
 import pathlib
 import numpy as np
 
@@ -15,6 +16,9 @@ from plotting import Plot
 from schedule import PlaneSchedule
 from plane_optimiser import PlaneOptimiser
 
+import logging
+
+log = logging.getLogger('schedule')
 
 # ====================================================== LOAD DATA
 FILE_IDX = 1
@@ -51,14 +55,17 @@ output_dir = f"{pathlib.Path(__file__).parent.parent.absolute()}/report/"
 
 # =================================================== PLOT FIGURES
 print("Drawing starting schedule...")
-Plot().image(plane_parameters.draw_planes(), "Starting schedule", save_dir=output_dir, show=False)
+# Plot().image(plane_parameters.draw_planes(), "Starting schedule", save_dir=output_dir, show=False)
+plane_parameters.draw_planes().save(os.path.join(output_dir, 'starting_schedule.jpg'))
 
 print("Drawing best schedule...")
 best = res.X[0].reshape(starting_population.shape)[:, 0]
-Plot().image(plane_parameters.draw_assigned_times(best),
-             "Best schedule",
-             save_dir=output_dir,
-             show=False)
+plane_parameters.draw_assigned_times(best).save(os.path.join(output_dir, 'best_schedule.jpg'))
+
+# Plot().image(plane_parameters.draw_assigned_times(best),
+#              "Best schedule",
+#              save_dir=output_dir,
+#              show=False)
 
 Plot().pareto_front_2d(res.F[:, 0], res.F[:, 1],
                     save_dir=output_dir, show=False)
@@ -79,7 +86,7 @@ HYPERPARAMETERS_START_Y = HEADER_HEIGHT + MARGIN + CELL_PADDING
 SCHEDULES_START_Y = HYPERPARAMETERS_START_Y + \
     HYPERPARAMETERS_HEIGHT + CELL_PADDING
 
-with Image.open(f"{output_dir + 'best_schedule.png'}") as im:
+with Image.open(f"{output_dir + 'best_schedule.jpg'}") as im:
     SCHEDULE_HEIGHT = (im.size[1]/im.size[0])*TWO_COL_WIDTH
 
 with Image.open(f"{output_dir + 'pareto_front_2d.png'}") as im:
@@ -115,11 +122,11 @@ pdf.cell(w=(PAGE_WIDTH/2),
         ln=0)
 
 # SCHEDULES
-pdf.image(output_dir + "starting_schedule.png",
-        x=MARGIN, y=SCHEDULES_START_Y, w=TWO_COL_WIDTH, h=0, type='PNG')
+pdf.image(output_dir + "starting_schedule.jpg",
+        x=MARGIN, y=SCHEDULES_START_Y, w=TWO_COL_WIDTH, h=0, type='JPG')
 
-pdf.image(output_dir + "best_schedule.png",
-        x=MARGIN + TWO_COL_WIDTH, y=SCHEDULES_START_Y, w=TWO_COL_WIDTH, h=0, type='PNG')
+pdf.image(output_dir + "best_schedule.jpg",
+        x=MARGIN + TWO_COL_WIDTH, y=SCHEDULES_START_Y, w=TWO_COL_WIDTH, h=0, type='JPG')
 
 # PARETO
 pdf.image(output_dir + "pareto_front_2d.png",
